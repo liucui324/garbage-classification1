@@ -1,0 +1,12 @@
+flask==3.0.0
+openai==1.12.0
+requests==2.31.0
+beautifulsoup4==4.12.3
+werkzeug==3.0.1
+Pillow>=10.0.0
+langchain-core>=0.1.0
+
+# PyTorch (图片识别功能需要，约200MB CPU版本)
+# 如果 Render 构建超时/超磁盘限制，可删除下面两行，图片识别会降级为模拟模式
+torch>=2.0.0
+torchvision>=0.15.0

@@ -35,9 +35,9 @@ app = Flask(__name__)
 app.secret_key = 'zhuhai_smart_trash_2026'
 
 AI_CONFIG = {
-    'base_url': 'http://192.168.165.241:3000/v1',
-    'api_key': 'Empty',
-    'model': 'qwen3-0.6b'
+    'base_url': os.environ.get('AI_BASE_URL', 'http://192.168.165.241:3000/v1'),
+    'api_key': os.environ.get('AI_API_KEY', 'Empty'),
+    'model': os.environ.get('AI_MODEL', 'qwen3-0.6b')
 }
 
 ai_client = None
@@ -61,9 +61,10 @@ def check_ai_available(force_check=False):
             api_key=AI_CONFIG['api_key']
         )
         
-        print("[INFO] 正在检测本地大模型: {0}".format(AI_CONFIG['base_url']))
-        
-        response = requests.get("{0}models".format(AI_CONFIG['base_url']), timeout=5)
+        print("[INFO] 正在检测大模型服务: {0}".format(AI_CONFIG['base_url']))
+
+        headers = {"Authorization": "Bearer {0}".format(AI_CONFIG['api_key'])}
+        response = requests.get("{0}models".format(AI_CONFIG['base_url']), headers=headers, timeout=10)
         print("[INFO] 大模型API响应状态: {0}".format(response.status_code))
         
         if response.status_code == 200:
@@ -73,21 +74,21 @@ def check_ai_available(force_check=False):
             
             ai_client = test_client
             ai_available_status = True
-            print("[OK] 本地大模型已连接，智能问答将使用AI模式")
+            print("[OK] 大模型服务已连接，智能问答将使用AI模式")
             return True
         else:
             ai_available_status = False
-            print("[WARN] 本地大模型服务响应异常 (HTTP {0})".format(response.status_code))
+            print("[WARN] 大模型服务响应异常 (HTTP {0})".format(response.status_code))
             return False
             
     except requests.exceptions.ConnectTimeout:
         ai_available_status = False
-        print("[WARN] 连接本地大模型超时（5秒），请确认服务已启动")
+        print("[WARN] 连接大模型超时（10秒），请检查网络或API地址")
         return False
     except requests.exceptions.ConnectionError as e:
         ai_available_status = False
-        print("[WARN] 无法连接到本地大模型 ({0})".format(e))
-        print("[TIP] 请确保 LM Studio 或 Ollama 等服务正在运行")
+        print("[WARN] 无法连接到大模型服务 ({0})".format(e))
+        print("[TIP] 请检查 API 地址是否正确")
         return False
     except Exception as e:
         ai_available_status = False
@@ -241,9 +242,11 @@ def ask_ai(question):
         return None
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-DB_PATH = os.path.join(BASE_DIR, 'instance', 'trash.db')
+# Render Disk 持久化路径，本地运行时使用项目目录
+DATA_DIR = os.environ.get('RENDER_DATA_DIR', BASE_DIR)
+DB_PATH = os.path.join(DATA_DIR, 'instance', 'trash.db')
 MODEL_PATH = os.path.join(BASE_DIR, 'trash_classifier.pth')
-UPLOAD_FOLDER = os.path.join(BASE_DIR, 'uploads')
+UPLOAD_FOLDER = os.path.join(DATA_DIR, 'uploads')
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 os.makedirs(os.path.dirname(DB_PATH), exist_ok=True)
 
@@ -2364,4 +2367,4 @@ if __name__ == '__main__':
     print("南方湿热气候适配")
     print("长辈友好设计")
     print("=" * 60)
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))

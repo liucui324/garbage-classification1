@@ -4,8 +4,8 @@ from langchain_core.prompts import PromptTemplate
 from bs4 import BeautifulSoup
 import json
 client = openai.OpenAI(
-    base_url="http://192.168.165.241:3000/v1",
-    api_key="Empty"
+    base_url=os.environ.get('AI_BASE_URL', 'http://192.168.165.241:3000/v1'),
+    api_key=os.environ.get('AI_API_KEY', 'Empty')
 )
 
    
@@ -197,5 +197,5 @@ def get_data():
         return jsonify({"message":error_message,"response":False})
     
 if __name__ == '__main__':
-    app.run(port=7001,host='0.0.0.0')
+    app.run(port=int(os.environ.get('PORT', 7001)),host='0.0.0.0')
 
