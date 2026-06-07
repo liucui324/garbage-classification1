@@ -1,0 +1,200 @@
+{% extends "base.html" %}
+{% set active_page = 'profile' %}
+
+{% block title %}个人中心 - 智能垃圾分类{% endblock %}
+
+{% block content %}
+<style>
+.profile-page { max-width: 920px; margin: 0 auto; padding: 2rem 1.5rem; }
+
+/* 头部 */
+.profile-header {
+    text-align: center; padding: 2.5rem 2rem;
+    background: linear-gradient(135deg, rgba(46,125,50,0.25) 0%, rgba(33,150,243,0.15) 100%);
+    border-radius: 24px; margin-bottom: 2rem;
+    border: 1px solid rgba(76,175,80,0.15);
+    position: relative; overflow: hidden;
+}
+.profile-header::before {
+    content:''; position:absolute; top:-40%; right:-20%; width:280px; height:280px;
+    background:radial-gradient(circle, rgba(76,175,80,0.08) 0%, transparent 70%); border-radius:50%;
+    animation: floatGlow 7s ease-in-out infinite;
+}
+@keyframes floatGlow{0%,100%{transform:translate(0,0)}50%{transform:translate(-10px,8px)}}
+.user-avatar {
+    width:96px;height:96px;border-radius:50%;
+    background:linear-gradient(135deg,#4CAF50,#2196F3);
+    display:flex;align-items:center;justify-content:center;margin:0 auto 1rem;
+    box-shadow:0 6px 24px rgba(76,175,80,0.3);position:relative;z-index:1;
+}
+.user-avatar i{font-size:2.6rem;color:#fff;}
+.profile-header h2{font-size:1.5rem;font-weight:700;margin-bottom:.3rem;position:relative;z-index:1;}
+.profile-header .subtitle{opacity:.7;font-size:.95rem;position:relative;z-index:1;}
+
+/* 统计卡片 */
+.stats-grid {
+    display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin-bottom:2rem;
+}
+.stat-card {
+    background:rgba(30,40,60,.75);backdrop-filter:blur(20px);
+    border-radius:18px;padding:1.3rem;text-align:center;
+    border:1px solid rgba(255,255,255,.07);transition:all .3s;position:relative;overflow:hidden;
+}
+.stat-card::before{
+    content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--sc);opacity:.8;
+}
+.stat-card:hover{transform:translateY(-3px);box-shadow:0 8px 28px rgba(0,0,0,.25);}
+.stat-icon-circle{
+    width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;
+    margin:0 auto .7rem;font-size:1.15rem;background:var(--sc)18;color:var(--sc);
+}
+.stat-num{font-size:1.7rem;font-weight:700;line-height:1.2;}
+.stat-lbl{font-size:.82rem;opacity:.55;margin-top:.2rem;}
+
+/* 操作按钮区 */
+.actions-row{display:flex;gap:1rem;flex-wrap:wrap;margin-top:2rem;}
+.action-btn{
+    flex:1;min-width:160px;padding:1.3rem 1rem;border-radius:16px;text-align:center;
+    text-decoration:none;color:#fff;display:block;transition:all .3s;border:none;cursor:pointer;
+}
+.action-btn:hover{transform:translateY(-2px);}
+.action-btn .ab-icon{font-size:1.8rem;margin-bottom:.5rem;display:block;}
+.action-btn .ab-text{font-size:.92rem;font-weight:500;}
+
+/* 响应式 */
+@media(max-width:768px){
+    .stats-grid{grid-template-columns:repeat(2,1fr);}
+    .actions-row{flex-direction:column;}
+}
+</style>
+
+<div class="profile-page">
+    <!-- 头部 -->
+    <div class="profile-header">
+        <div class="user-avatar"><i class="fas fa-user"></i></div>
+        <h2 id="user-name">欢迎回来</h2>
+        <p class="subtitle" id="user-subtitle">开始您的环保之旅</p>
+    </div>
+
+    <!-- 登录/注册区域 -->
+    <div class="auth-section" id="auth-section">
+        <div style="display:flex;gap:1rem;margin-bottom:1.5rem;">
+            <button onclick="switchAuthTab('login')" id="login-tab" class="auth-tab active"
+                style="flex:1;padding:1rem;background:rgba(46,125,50,.3);border:2px solid #2E7D32;border-radius:12px;color:#fff;cursor:pointer;">登录</button>
+            <button onclick="switchAuthTab('register')" id="register-tab" class="auth-tab"
+                style="flex:1;padding:1rem;background:rgba(255,255,255,.1);border:2px solid rgba(255,255,255,.2);border-radius:12px;color:#fff;cursor:pointer;">注册</button>
+        </div>
+        <form id="login-form" onsubmit="handleLogin(event)" style="background:rgba(30,40,60,.8);backdrop-filter:blur(20px);border-radius:20px;padding:2rem;">
+            <div style="margin-bottom:1.5rem;"><label style="display:block;margin-bottom:.5rem;"><i class="fas fa-user"></i> 用户名</label><input type="text" id="login-username" placeholder="请输入用户名" required style="width:100%;padding:1rem;background:rgba(255,255,255,.1);border:2px solid rgba(255,255,255,.2);border-radius:12px;color:#fff;font-size:1.1rem;"></div>
+            <div style="margin-bottom:1.5rem;"><label style="display:block;margin-bottom:.5rem;"><i class="fas fa-lock"></i> 密码</label><input type="password" id="login-password" placeholder="请输入密码" required style="width:100%;padding:1rem;background:rgba(255,255,255,.1);border:2px solid rgba(255,255,255,.2);border-radius:12px;color:#fff;font-size:1.1rem;"></div>
+            <button type="submit" style="width:100%;padding:1rem;background:linear-gradient(135deg,#2E7D32,#0288D1);border:none;border-radius:12px;color:white;font-size:1.1rem;cursor:pointer;"><i class="fas fa-sign-in-alt"></i><span style="margin-left:.5rem;">登录</span></button>
+        </form>
+        <form id="register-form" onsubmit="handleRegister(event)" style="display:none;background:rgba(30,40,60,.8);backdrop-filter:blur(20px);border-radius:20px;padding:2rem;">
+            <div style="margin-bottom:1.5rem;"><label style="display:block;margin-bottom:.5rem;"><i class="fas fa-user"></i> 用户名</label><input type="text" id="reg-username" placeholder="请输入用户名" required style="width:100%;padding:1rem;background:rgba(255,255,255,.1);border:2px solid rgba(255,255,255,.2);border-radius:12px;color:#fff;font-size:1.1rem;"></div>
+            <div style="margin-bottom:1.5rem;"><label style="display:block;margin-bottom:.5rem;"><i class="fas fa-lock"></i> 密码</label><input type="password" id="reg-password" placeholder="请输入密码" required style="width:100%;padding:1rem;background:rgba(255,255,255,.1);border:2px solid rgba(255,255,255,.2);border-radius:12px;color:#fff;font-size:1.1rem;"></div>
+            <div style="margin-bottom:1.5rem;"><label style="display:block;margin-bottom:.5rem;"><i class="fas fa-lock"></i> 确认密码</label><input type="password" id="reg-password-confirm" placeholder="请再次输入密码" required style="width:100%;padding:1rem;background:rgba(255,255,255,.1);border:2px solid rgba(255,255,255,.2);border-radius:12px;color:#fff;font-size:1.1rem;"></div>
+            <button type="submit" style="width:100%;padding:1rem;background:linear-gradient(135deg,#2E7D32,#0288D1);border:none;border-radius:12px;color:white;font-size:1.1rem;cursor:pointer;"><i class="fas fa-user-plus"></i><span style="margin-left:.5rem;">注册</span></button>
+        </form>
+    </div>
+
+    <!-- 已登录内容 -->
+    <div class="logged-content" id="profile-content" style="display:none;">
+        <!-- 统计卡片 -->
+        <div class="stats-grid">
+            <div class="stat-card" style="--sc:#2196F3;">
+                <div class="stat-icon-circle"><i class="fas fa-trash-alt"></i></div>
+                <div class="stat-num" id="total-count">0</div>
+                <div class="stat-lbl">总投放次数</div>
+            </div>
+            <div class="stat-card" style="--sc:#4CAF50;">
+                <div class="stat-icon-circle"><i class="fas fa-calendar-check"></i></div>
+                <div class="stat-num" id="month-count">0</div>
+                <div class="stat-lbl">本月投放</div>
+            </div>
+            <div class="stat-card" style="--sc:#FFC107;">
+                <div class="stat-icon-circle"><i class="fas fa-star"></i></div>
+                <div class="stat-num" id="eco-score">0</div>
+                <div class="stat-lbl">环保积分</div>
+            </div>
+            <div class="stat-card" style="--sc:#9C27B0;">
+                <div class="stat-icon-circle"><i class="fas fa-trophy"></i></div>
+                <div class="stat-num" id="accuracy">--</div>
+                <div class="stat-lbl">分类准确率</div>
+            </div>
+        </div>
+
+        <!-- 操作按钮 -->
+        <div class="actions-row">
+            <a href="/history" class="action-btn" style="background:rgba(33,150,243,.25);">
+                <span class="ab-icon"><i class="fas fa-history" style="color:#64B5F6;"></i></span>
+                <span class="ab-text">投放记录</span>
+            </a>
+            <a href="/devices" class="action-btn" style="background:rgba(76,175,80,.25);">
+                <span class="ab-icon"><i class="fas fa-microchip" style="color:#81C784;"></i></span>
+                <span class="ab-text">设备管理</span>
+            </a>
+            <a href="/points" class="action-btn" style="background:rgba(255,193,7,.25);">
+                <span class="ab-icon"><i class="fas fa-star" style="color:#FFD54F;"></i></span>
+                <span class="ab-text">积分中心</span>
+            </a>
+            <button onclick="handleLogout()" class="action-btn" style="background:rgba(244,67,54,.2);border:none;cursor:pointer;">
+                <span class="ab-icon"><i class="fas fa-sign-out-alt" style="color:#EF9A9A;"></i></span>
+                <span class="ab-text">退出登录</span>
+            </button>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function checkUser() {
+    fetch('/api/user').then(r=>r.json()).then(data=>{
+        if(data.logged_in){
+            document.getElementById('auth-section').style.display='none';
+            document.getElementById('profile-content').style.display='block';
+            document.getElementById('user-name').textContent=data.username;
+            document.getElementById('user-subtitle').textContent='环保达人';
+            if(data.stats){
+                document.getElementById('total-count').textContent=data.stats.total||0;
+                document.getElementById('month-count').textContent=data.stats.month||0;
+                document.getElementById('eco-score').textContent=data.stats.score||0;
+            }
+        }
+    });
+}
+
+function switchAuthTab(tab){
+    const lf=document.getElementById('login-form'),rf=document.getElementById('register-form');
+    const lt=document.getElementById('login-tab'),rt=document.getElementById('register-tab');
+    if(tab==='login'){lf.style.display='block';rf.style.display='none';
+        lt.style.background='rgba(46,125,50,.3)';lt.style.borderColor='#2E7D32';
+        rt.style.background='rgba(255,255,255,.1)';rt.style.borderColor='rgba(255,255,255,.2)';
+    }else{lf.style.display='none';rf.style.display='block';
+        rt.style.background='rgba(46,125,50,.3)';rt.style.borderColor='#2E7D32';
+        lt.style.background='rgba(255,255,255,.1)';lt.style.borderColor='rgba(255,255,255,.2)';
+    }
+}
+
+function handleLogin(e){e.preventDefault();
+    const u=document.getElementById('login-username').value.trim(),p=document.getElementById('login-password').value;
+    fetch('/api/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:u,password:p})})
+    .then(r=>r.json()).then(d=>{if(d.success)checkUser();else alert(d.message||'登录失败');});
+}
+function handleRegister(e){e.preventDefault();
+    const u=document.getElementById('reg-username').value.trim(),p=document.getElementById('reg-password').value,pc=document.getElementById('reg-password-confirm').value;
+    if(p!==pc){alert('两次密码不一致');return;}
+    fetch('/api/register',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:u,password:p})})
+    .then(r=>r.json()).then(d=>{if(d.success){alert('注册成功，请登录');switchAuthTab('login');document.getElementById('login-username').value=u;}else alert(d.message||'注册失败');});
+}
+function handleLogout(){
+    fetch('/api/logout',{method:'POST'}).then(r=>r.json()).then(d=>{
+        if(d.success){document.getElementById('auth-section').style.display='block';document.getElementById('profile-content').style.display='none';
+            document.getElementById('user-name').textContent='欢迎回来';document.getElementById('user-subtitle').textContent='开始您的环保之旅';
+        }
+    });
+}
+document.addEventListener('DOMContentLoaded',checkUser);
+</script>
+{% endblock %}

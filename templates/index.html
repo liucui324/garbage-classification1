@@ -1,0 +1,208 @@
+{% extends "base.html" %}
+{% set active_page = 'home' %}
+
+{% block title %}智能家居垃圾分类 - 首页{% endblock %}
+
+{% block content %}
+<div class="home-page">
+    <div class="welcome-section">
+        <h1>🏠 智能家居垃圾分类系统</h1>
+        <p>AI智能识别 · 语音问答 · 环保生活</p>
+        <p style="opacity: 0.7; font-size: 0.9rem; margin-top: 0.5rem;">珠海家庭专属 · 南方湿热气候适配</p>
+    </div>
+
+    <div class="alert-banner" id="alert-banner" style="display: none; background: linear-gradient(135deg, rgba(255, 152, 0, 0.3) 0%, rgba(244, 67, 54, 0.3) 100%); border-radius: 16px; padding: 1rem; margin-bottom: 1.5rem; border: 1px solid rgba(255, 152, 0, 0.5);">
+        <div style="display: flex; align-items: center; gap: 0.8rem;">
+            <i class="fas fa-bell" style="color: #FF9800; font-size: 1.5rem;"></i>
+            <div>
+                <h4 style="margin-bottom: 0.2rem;">设备提醒</h4>
+                <p id="alert-text" style="opacity: 0.9;"></p>
+            </div>
+            <a href="/devices" style="margin-left: auto; background: rgba(255, 255, 255, 0.2); padding: 0.5rem 1rem; border-radius: 8px; text-decoration: none; color: #fff;">
+                查看 <i class="fas fa-arrow-right"></i>
+            </a>
+        </div>
+    </div>
+
+    <div class="quick-actions">
+        <a href="/scan" class="action-card scan-card">
+            <div class="action-icon">
+                <i class="fas fa-camera"></i>
+            </div>
+            <div class="action-text">
+                <h3>拍照识别</h3>
+                <p>拍一拍，自动识别垃圾类别</p>
+            </div>
+        </a>
+
+        <a href="/qa" class="action-card qa-card">
+            <div class="action-icon">
+                <i class="fas fa-comments"></i>
+            </div>
+            <div class="action-text">
+                <h3>智能问答</h3>
+                <p>语音/文字提问，快速解答</p>
+            </div>
+        </a>
+
+        <a href="/guide" class="action-card guide-card">
+            <div class="action-icon">
+                <i class="fas fa-book"></i>
+            </div>
+            <div class="action-text">
+                <h3>分类指南</h3>
+                <p>图文详解，轻松学会分类</p>
+            </div>
+        </a>
+
+        <a href="/history" class="action-card history-card">
+            <div class="action-icon">
+                <i class="fas fa-history"></i>
+            </div>
+            <div class="action-text">
+                <h3>投放记录</h3>
+                <p>查看历史，追踪环保贡献</p>
+            </div>
+        </a>
+
+        <a href="/devices" class="action-card devices-card">
+            <div class="action-icon">
+                <i class="fas fa-trash-alt"></i>
+            </div>
+            <div class="action-text">
+                <h3>设备管理</h3>
+                <p>智能垃圾桶状态监控</p>
+            </div>
+        </a>
+    </div>
+
+    <div class="category-intro">
+        <h2>四大垃圾分类</h2>
+        <div class="category-grid">
+            <div class="category-item recyclable" onclick="showCategoryDetail('recyclable')">
+                <div class="category-icon">
+                    <i class="fas fa-recycle"></i>
+                </div>
+                <h3>可回收物</h3>
+                <p>纸张、塑料、玻璃、金属</p>
+            </div>
+
+            <div class="category-item wet" onclick="showCategoryDetail('wet')">
+                <div class="category-icon">
+                    <i class="fas fa-leaf"></i>
+                </div>
+                <h3>厨余垃圾</h3>
+                <p>剩菜剩饭、果皮果核</p>
+            </div>
+
+            <div class="category-item dry" onclick="showCategoryDetail('dry')">
+                <div class="category-icon">
+                    <i class="fas fa-trash"></i>
+                </div>
+                <h3>其他垃圾</h3>
+                <p>卫生纸、烟蒂、陶瓷</p>
+            </div>
+
+            <div class="category-item hazardous" onclick="showCategoryDetail('hazardous')">
+                <div class="category-icon">
+                    <i class="fas fa-skull-crossbones"></i>
+                </div>
+                <h3>有害垃圾</h3>
+                <p>电池、灯管、药品</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="south-tip-banner" style="cursor: pointer;">
+        <i class="fas fa-cloud-sun"></i>
+        <div style="flex: 1;">
+            <h3>🌡️ 南方湿热气候专属提示</h3>
+            <p>珠海家庭专属 · 防潮除湿除味 · 厨余垃圾请沥干水分后投放，每日清理防止异味滋生细菌</p>
+        </div>
+        <a href="/south_guide" onclick="event.stopPropagation()" style="background: rgba(255, 255, 255, 0.2); padding: 0.8rem 1.5rem; border-radius: 12px; text-decoration: none; color: #fff; white-space: nowrap;">
+            <i class="fas fa-book"></i> 详细指南
+        </a>
+    </div>
+
+    <div id="category-modal" class="modal" style="display: none;">
+        <div class="modal-content" style="background: rgba(30, 40, 60, 0.95); backdrop-filter: blur(20px); border-radius: 20px; padding: 2rem; max-width: 500px; margin: auto; max-height: 80vh; overflow-y: auto;">
+            <div id="category-detail-content"></div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function loadAlerts() {
+    Promise.all([
+        fetch('/api/bin_alerts').then(r => r.json()),
+        fetch('/api/filter_alerts').then(r => r.json())
+    ])
+    .then(([binAlerts, filterAlerts]) => {
+        const allAlerts = [...(binAlerts.alerts || []), ...(filterAlerts.alerts || [])];
+        if (allAlerts.length > 0) {
+            const banner = document.getElementById('alert-banner');
+            const text = document.getElementById('alert-text');
+            banner.style.display = 'block';
+            text.textContent = allAlerts[0].message;
+        }
+    });
+}
+
+function showCategoryDetail(category) {
+    fetch(`/api/category_detail/${category}`)
+    .then(response => response.json())
+    .then(data => {
+        const content = document.getElementById('category-detail-content');
+        content.innerHTML = `
+            <div style="text-align: center; margin-bottom: 1.5rem;">
+                <div style="width: 80px; height: 80px; background: ${data.color}33; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem;">
+                    <i class="fas ${data.icon}" style="font-size: 2.5rem; color: ${data.color};"></i>
+                </div>
+                <h2 style="color: ${data.color};">${data.name}</h2>
+                <p style="opacity: 0.7; margin-top: 0.5rem;">${data.description}</p>
+            </div>
+            
+            <div style="margin-bottom: 1.5rem;">
+                <h4 style="margin-bottom: 1rem;"><i class="fas fa-list"></i> 常见物品</h4>
+                ${data.items.map(item => `
+                    <div style="background: rgba(255, 255, 255, 0.1); border-radius: 12px; padding: 1rem; margin-bottom: 0.8rem;">
+                        <h5 style="margin-bottom: 0.3rem;">${item.name}</h5>
+                        <p style="opacity: 0.7; font-size: 0.9rem;">${item.examples}</p>
+                    </div>
+                `).join('')}
+            </div>
+            
+            <div style="margin-bottom: 1.5rem;">
+                <h4 style="margin-bottom: 1rem;"><i class="fas fa-lightbulb"></i> 投放提示</h4>
+                <ul style="list-style: none; padding: 0;">
+                    ${data.tips.map(tip => `
+                        <li style="padding: 0.5rem 0; padding-left: 1.5rem; position: relative;">
+                            <i class="fas fa-check" style="color: #4CAF50; position: absolute; left: 0;"></i>
+                            ${tip}
+                        </li>
+                    `).join('')}
+                </ul>
+            </div>
+            
+            <div style="background: linear-gradient(135deg, rgba(255, 152, 0, 0.2) 0%, rgba(255, 152, 0, 0.1) 100%); border-radius: 12px; padding: 1rem; margin-bottom: 1.5rem; border-left: 4px solid #FF9800;">
+                <h4 style="margin-bottom: 0.5rem;"><i class="fas fa-sun"></i> 南方气候专属提示</h4>
+                <p style="opacity: 0.9;">${data.south_tip}</p>
+            </div>
+            
+            <button onclick="closeCategoryModal()" style="width: 100%; padding: 1rem; background: linear-gradient(135deg, #2E7D32 0%, #0288D1 100%); border: none; border-radius: 12px; color: white; font-size: 1rem; cursor: pointer;">
+                关闭
+            </button>
+        `;
+        document.getElementById('category-modal').style.display = 'flex';
+    });
+}
+
+function closeCategoryModal() {
+    document.getElementById('category-modal').style.display = 'none';
+}
+
+document.addEventListener('DOMContentLoaded', loadAlerts);
+</script>
+{% endblock %}

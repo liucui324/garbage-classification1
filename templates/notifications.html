@@ -1,0 +1,141 @@
+{% extends "base.html" %}
+{% set active_page = 'notifications' %}
+
+{% block title %}消息通知 - 智能垃圾分类{% endblock %}
+
+{% block content %}
+<div class="notifications-page">
+    <div class="notifications-header">
+        <h1>🔔 消息通知</h1>
+        <p>查看系统通知和提醒</p>
+    </div>
+
+    <div class="notification-tabs">
+        <button class="tab-btn active" onclick="filterNotifications('all')">
+            <i class="fas fa-inbox"></i> 全部
+        </button>
+        <button class="tab-btn" onclick="filterNotifications('unread')">
+            <i class="fas fa-envelope"></i> 未读
+        </button>
+        <button class="tab-btn" onclick="filterNotifications('alert')">
+            <i class="fas fa-exclamation-triangle"></i> 提醒
+        </button>
+    </div>
+
+    <div class="notifications-list" id="notifications-list">
+        <div class="empty-state" id="empty-state">
+            <i class="fas fa-bell-slash"></i>
+            <p>暂无通知消息</p>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let allNotifications = [];
+
+function loadNotifications() {
+    fetch('/api/notifications')
+    .then(response => response.json())
+    .then(data => {
+        allNotifications = data.notifications || [];
+        renderNotifications(allNotifications);
+    })
+    .catch(err => console.error('加载通知失败:', err));
+}
+
+function filterNotifications(type) {
+    document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+    event.target.closest('.tab-btn').classList.add('active');
+    
+    let filtered = allNotifications;
+    if (type === 'unread') {
+        filtered = allNotifications.filter(n => !n.is_read);
+    } else if (type === 'alert') {
+        filtered = allNotifications.filter(n => n.type === 'warning' || n.type === 'danger');
+    }
+    
+    renderNotifications(filtered);
+}
+
+function renderNotifications(notifications) {
+    const container = document.getElementById('notifications-list');
+    
+    if (notifications.length === 0) {
+        document.getElementById('empty-state').style.display = 'flex';
+        return;
+    }
+    
+    document.getElementById('empty-state').style.display = 'none';
+    
+    const typeIcons = {
+        'info': { icon: 'fa-info-circle', color: '#2196F3' },
+        'success': { icon: 'fa-check-circle', color: '#4CAF50' },
+        'warning': { icon: 'fa-exclamation-triangle', color: '#FF9800' },
+        'danger': { icon: 'fa-times-circle', color: '#F44336' }
+    };
+    
+    const html = notifications.map(notif => {
+        const info = typeIcons[notif.type] || typeIcons['info'];
+        const bgColor = notif.is_read ? 'rgba(30, 40, 60, 0.5)' : 'rgba(30, 40, 60, 0.8)';
+        const borderColor = notif.is_read ? 'transparent' : info.color;
+        const date = new Date(notif.created_at).toLocaleString('zh-CN');
+        
+        return `
+            <div class="notification-card" 
+                 style="background: ${bgColor}; backdrop-filter: blur(20px); border-radius: 16px; padding: 1.2rem; margin-bottom: 0.8rem; border: 1px solid ${borderColor}; cursor: pointer; transition: all 0.3s;"
+                 onclick="markAsRead(${notif.id})">
+                <div style="display: flex; gap: 1rem;">
+                    <div style="width: 50px; height: 50px; background: ${info.color}33; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                        <i class="fas ${info.icon}" style="color: ${info.color}; font-size: 1.3rem;"></i>
+                    </div>
+                    <div style="flex: 1;">
+                        <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 0.3rem;">
+                            <h4 style="font-size: 1.1rem;">${notif.title}</h4>
+                            ${!notif.is_read ? '<span style="background: #F44336; color: white; padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.75rem;">新</span>' : ''}
+                        </div>
+                        <p style="opacity: 0.8; margin-bottom: 0.3rem;">${notif.content}</p>
+                        <p style="opacity: 0.5; font-size: 0.85rem;">${date}</p>
+                    </div>
+                </div>
+            </div>
+        `;
+    }).join('');
+    
+    container.innerHTML = html;
+}
+
+function markAsRead(notificationId) {
+    fetch(`/api/notifications/read/${notificationId}`, { method: 'POST' })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            loadNotifications();
+            updateNotificationBadge();
+        }
+    });
+}
+
+function updateNotificationBadge() {
+    fetch('/api/notifications/unread_count')
+    .then(response => response.json())
+    .then(data => {
+        const badge = document.getElementById('notification-badge');
+        if (badge) {
+            if (data.count > 0) {
+                badge.textContent = data.count > 99 ? '99+' : data.count;
+                badge.style.display = 'block';
+            } else {
+                badge.style.display = 'none';
+            }
+        }
+    });
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    loadNotifications();
+    updateNotificationBadge();
+});
+</script>
+{% endblock %}

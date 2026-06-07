@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}智能家居垃圾分类{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v=20260531v3">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <div class="app-container">
+        <header class="app-header">
+            <div class="header-content">
+                <div class="logo">
+                    <i class="fas fa-recycle"></i>
+                    <span>智能垃圾分类</span>
+                </div>
+                <div class="header-right">
+                    <a href="/notifications" class="notification-icon" style="position: relative; color: #fff; font-size: 1.2rem; margin-right: 1rem;">
+                        <i class="fas fa-bell"></i>
+                        <span id="notification-badge" style="display: none; position: absolute; top: -8px; right: -8px; background: #F44336; color: white; font-size: 0.7rem; padding: 2px 6px; border-radius: 10px; min-width: 18px; text-align: center;"></span>
+                    </a>
+                    <span id="user-info"></span>
+                </div>
+            </div>
+        </header>
+
+        <main class="app-main">
+            {% block content %}{% endblock %}
+        </main>
+
+        <nav class="app-nav">
+            <a href="/" class="nav-item {% if active_page == 'home' %}active{% endif %}">
+                <i class="fas fa-home"></i>
+                <span>首页</span>
+            </a>
+            <a href="/scan" class="nav-item {% if active_page == 'scan' %}active{% endif %}">
+                <i class="fas fa-camera"></i>
+                <span>识别</span>
+            </a>
+            <a href="/qa" class="nav-item {% if active_page == 'qa' %}active{% endif %}">
+                <i class="fas fa-comments"></i>
+                <span>问答</span>
+            </a>
+            <a href="/points" class="nav-item {% if active_page == 'points' %}active{% endif %}">
+                <i class="fas fa-gem"></i>
+                <span>积分</span>
+            </a>
+            <a href="/stats" class="nav-item {% if active_page == 'stats' %}active{% endif %}">
+                <i class="fas fa-chart-pie"></i>
+                <span>分析</span>
+            </a>
+            <a href="/devices" class="nav-item {% if active_page == 'devices' %}active{% endif %}">
+                <i class="fas fa-trash-alt"></i>
+                <span>设备</span>
+            </a>
+            <a href="/profile" class="nav-item {% if active_page == 'profile' %}active{% endif %}">
+                <i class="fas fa-user"></i>
+                <span>我的</span>
+            </a>
+        </nav>
+    </div>
+
+    <div id="loading" class="loading-overlay" style="display: none;">
+        <div class="loading-content">
+            <div class="spinner"></div>
+            <p>识别中，请稍候...</p>
+        </div>
+    </div>
+
+    <div id="south-tip-modal" class="modal" style="display: none;">
+        <div class="modal-content" style="background: rgba(30, 40, 60, 0.95); backdrop-filter: blur(20px); border-radius: 20px; padding: 2rem; max-width: 500px; margin: auto; max-height: 85vh; overflow-y: auto; position: relative;">
+            <button onclick="closeSouthTipModal()" style="position: absolute; top: 1rem; right: 1rem; width: 36px; height: 36px; background: rgba(255, 255, 255, 0.1); border: none; border-radius: 50%; color: white; font-size: 1.2rem; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.3s;" onmouseover="this.style.background='rgba(255,255,255,0.2)'" onmouseout="this.style.background='rgba(255,255,255,0.1)'">
+                <i class="fas fa-times"></i>
+            </button>
+            <div style="text-align: center; margin-bottom: 1.5rem;">
+                <i class="fas fa-cloud-sun" style="font-size: 3rem; color: #FF9800;"></i>
+                <h2 style="margin-top: 1rem;">南方气候提醒</h2>
+                <p id="weather-info" style="opacity: 0.7; margin-top: 0.5rem;"></p>
+            </div>
+            
+            <div id="alert-section" style="display: none; background: rgba(244, 67, 54, 0.2); border-radius: 12px; padding: 1rem; margin-bottom: 1rem; border-left: 4px solid #F44336;">
+                <p style="font-weight: 600;"><i class="fas fa-exclamation-triangle"></i> <span id="alert-text"></span></p>
+            </div>
+            
+            <div id="seasonal-section" style="background: linear-gradient(135deg, rgba(76, 175, 80, 0.2) 0%, rgba(139, 195, 74, 0.2) 100%); border-radius: 12px; padding: 1rem; margin-bottom: 1rem;">
+                <h4 id="seasonal-title" style="margin-bottom: 0.5rem;"></h4>
+                <p id="seasonal-content" style="opacity: 0.9; font-size: 0.9rem;"></p>
+            </div>
+            
+            <div id="south-tips-list" style="margin-bottom: 1.5rem;"></div>
+            
+            <div style="display: flex; gap: 1rem;">
+                <a href="/south_guide" style="flex: 1; padding: 1rem; background: rgba(255, 152, 0, 0.3); border: none; border-radius: 12px; color: white; font-size: 1rem; text-align: center; text-decoration: none; display: block;">
+                    <i class="fas fa-book"></i> 详细指南
+                </a>
+                <button onclick="closeSouthTipModal()" style="flex: 1; padding: 1rem; background: linear-gradient(135deg, #2E7D32 0%, #0288D1 100%); border: none; border-radius: 12px; color: white; font-size: 1rem; cursor: pointer;">
+                    我知道了
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="login-prompt-modal" class="modal" style="display: none;">
+        <div class="modal-content" style="background: rgba(30, 40, 60, 0.95); backdrop-filter: blur(20px); border-radius: 24px; padding: 2.5rem; max-width: 420px; margin: auto; text-align: center;">
+            <div style="width: 80px; height: 80px; background: linear-gradient(135deg, #2E7D32 0%, #0288D1 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.5rem;">
+                <i class="fas fa-user-circle" style="font-size: 2.5rem; color: #fff;"></i>
+            </div>
+            <h2 style="margin-bottom: 0.8rem; font-size: 1.6rem;">欢迎使用</h2>
+            <p style="opacity: 0.7; margin-bottom: 2rem; line-height: 1.6;">登录后可使用完整功能<br>记录投放历史、查看环保数据</p>
+            
+            <a href="/login" onclick="closeLoginPrompt()" style="display: block; width: 100%; padding: 1.2rem; background: linear-gradient(135deg, #2E7D32 0%, #0288D1 100%); border: none; border-radius: 16px; color: white; font-size: 1.15rem; font-weight: 600; text-decoration: none; margin-bottom: 1rem;">
+                <i class="fas fa-sign-in-alt"></i> 登录
+            </a>
+            <a href="/register" onclick="closeLoginPrompt()" style="display: block; width: 100%; padding: 1.2rem; background: rgba(255, 255, 255, 0.1); border: 2px solid rgba(255, 255, 255, 0.3); border-radius: 16px; color: white; font-size: 1.15rem; text-decoration: none;">
+                <i class="fas fa-user-plus"></i> 注册新账号
+            </a>
+            <button onclick="closeLoginPrompt()" style="margin-top: 1.5rem; background: none; border: none; color: rgba(255,255,255,0.5); cursor: pointer; font-size: 0.95rem;">
+                稍后再说
+            </button>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+    <script>
+    function checkUser() {
+        fetch('/api/user')
+        .then(response => response.json())
+        .then(data => {
+            const userInfo = document.getElementById('user-info');
+            if (data.logged_in) {
+                userInfo.innerHTML = `<a href="/profile" style="color: #fff; text-decoration: none; display: flex; align-items: center; gap: 0.5rem;">
+                    <i class="fas fa-user-circle" style="font-size: 1.3rem;"></i>
+                    <span style="opacity: 0.8;">${data.username}</span>
+                </a>`;
+            } else {
+                userInfo.innerHTML = `<button onclick="showLoginPrompt()" style="background: linear-gradient(135deg, #2E7D32 0%, #0288D1 100%); border: none; border-radius: 20px; padding: 0.6rem 1.2rem; color: white; cursor: pointer; font-size: 0.95rem;">
+                    <i class="fas fa-sign-in-alt"></i> 登录
+                </button>`;
+                
+                const hasShownToday = localStorage.getItem('login_prompt_shown_today');
+                const today = new Date().toDateString();
+                if (hasShownToday !== today) {
+                    setTimeout(() => {
+                        showLoginPrompt();
+                        localStorage.setItem('login_prompt_shown_today', today);
+                    }, 3000);
+                }
+            }
+        });
+    }
+
+    function showLoginPrompt() {
+        document.getElementById('login-prompt-modal').style.display = 'flex';
+    }
+    
+    function closeLoginPrompt() {
+        document.getElementById('login-prompt-modal').style.display = 'none';
+    }
+
+    function updateNotificationBadge() {
+        fetch('/api/notifications/unread_count')
+        .then(response => response.json())
+        .then(data => {
+            const badge = document.getElementById('notification-badge');
+            if (badge) {
+                if (data.count > 0) {
+                    badge.textContent = data.count > 99 ? '99+' : data.count;
+                    badge.style.display = 'block';
+                } else {
+                    badge.style.display = 'none';
+                }
+            }
+        });
+    }
+
+    function loadSouthTips() {
+        fetch('/api/south_tips')
+        .then(response => response.json())
+        .then(data => {
+            const weatherInfo = document.getElementById('weather-info');
+            weatherInfo.textContent = `珠海 · ${data.season_name} · ${data.weather} · 湿度 ${data.humidity}%`;
+            
+            const alertSection = document.getElementById('alert-section');
+            const alertText = document.getElementById('alert-text');
+            if (data.alert_level === 'danger') {
+                alertSection.style.display = 'block';
+                alertText.textContent = `高湿预警！当前湿度${data.humidity}%，厨余垃圾请立即清理！`;
+            } else if (data.alert_level === 'warning') {
+                alertSection.style.display = 'block';
+                alertSection.style.background = 'rgba(255, 152, 0, 0.2)';
+                alertSection.style.borderColor = '#FF9800';
+                alertText.textContent = `湿度较高（${data.humidity}%），请注意防潮除湿`;
+            } else {
+                alertSection.style.display = 'none';
+            }
+            
+            const seasonalTitle = document.getElementById('seasonal-title');
+            const seasonalContent = document.getElementById('seasonal-content');
+            seasonalTitle.textContent = data.seasonal.title;
+            seasonalContent.textContent = data.seasonal.content;
+            
+            const tipsList = document.getElementById('south-tips-list');
+            const priorityTips = data.tips.slice(0, 3);
+            tipsList.innerHTML = priorityTips.map(tip => `
+                <div style="background: rgba(255, 255, 255, 0.1); border-radius: 12px; padding: 1rem; margin-bottom: 0.8rem;">
+                    <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
+                        <i class="fas ${tip.icon}" style="color: ${tip.color};"></i>
+                        <h4 style="font-size: 0.95rem;">${tip.title}</h4>
+                    </div>
+                    <p style="opacity: 0.8; font-size: 0.85rem; line-height: 1.5;">${tip.content}</p>
+                </div>
+            `).join('');
+        });
+    }
+
+    function showSouthTipModal() {
+        loadSouthTips();
+        document.getElementById('south-tip-modal').style.display = 'flex';
+    }
+
+    function closeSouthTipModal() {
+        document.getElementById('south-tip-modal').style.display = 'none';
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        checkUser();
+        updateNotificationBadge();
+        
+        const lastShow = localStorage.getItem('south_tip_last_show');
+        const now = Date.now();
+        if (!lastShow || now - parseInt(lastShow) > 3600000) {
+            setTimeout(() => {
+                showSouthTipModal();
+                localStorage.setItem('south_tip_last_show', now.toString());
+            }, 2000);
+        }
+    });
+    </script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,155 @@
+{% extends "base.html" %}
+{% set active_page = 'guide' %}
+
+{% block title %}分类指南 - 智能垃圾分类{% endblock %}
+
+{% block content %}
+<div class="guide-page">
+    <div class="guide-header">
+        <h1>📖 垃圾分类指南</h1>
+        <p>详细图文指南，轻松学会垃圾分类</p>
+    </div>
+
+    <div class="guide-content">
+        <div class="guide-category" style="background: rgba(30, 40, 60, 0.8); backdrop-filter: blur(20px); border-radius: 20px; overflow: hidden; margin-bottom: 2rem; border: 1px solid rgba(255, 255, 255, 0.1);">
+            <div class="category-header" style="background: linear-gradient(135deg, rgba(33, 150, 243, 0.3) 0%, rgba(0, 188, 212, 0.3) 100%); padding: 1.5rem;">
+                <i class="fas fa-recycle" style="color: #2196F3; font-size: 2rem;"></i>
+                <h2 style="display: inline; margin-left: 1rem;">可回收物</h2>
+                <span class="color-badge" style="background: #2196F3; padding: 0.3rem 0.8rem; border-radius: 20px; float: right;">蓝色桶</span>
+            </div>
+            <div class="category-body" style="padding: 1.5rem;">
+                <p class="category-desc" style="margin-bottom: 1.5rem; opacity: 0.9;">
+                    可回收物是指适宜回收利用和资源化利用的生活废弃物，包括废纸、废塑料、废金属、废玻璃、废织物等。
+                </p>
+                <div class="item-list">
+                    <div class="item-group" style="background: rgba(255, 255, 255, 0.1); border-radius: 12px; padding: 1rem; margin-bottom: 1rem;">
+                        <h4>📄 废纸类</h4>
+                        <p style="opacity: 0.8;">报纸、杂志、书籍、纸板箱、办公用纸等</p>
+                    </div>
+                    <div class="item-group" style="background: rgba(255, 255, 255, 0.1); border-radius: 12px; padding: 1rem; margin-bottom: 1rem;">
+                        <h4>🥤 塑料类</h4>
+                        <p style="opacity: 0.8;">塑料瓶、塑料盆、塑料玩具、塑料桶等</p>
+                    </div>
+                    <div class="item-group" style="background: rgba(255, 255, 255, 0.1); border-radius: 12px; padding: 1rem; margin-bottom: 1rem;">
+                        <h4>🥫 金属类</h4>
+                        <p style="opacity: 0.8;">易拉罐、金属罐、金属餐具、铁钉等</p>
+                    </div>
+                    <div class="item-group" style="background: rgba(255, 255, 255, 0.1); border-radius: 12px; padding: 1rem;">
+                        <h4>🍾 玻璃类</h4>
+                        <p style="opacity: 0.8;">玻璃瓶、玻璃杯、玻璃镜子、玻璃窗等</p>
+                    </div>
+                </div>
+                <div style="background: linear-gradient(135deg, rgba(255, 152, 0, 0.2) 0%, rgba(255, 152, 0, 0.1) 100%); border-radius: 12px; padding: 1rem; margin-top: 1rem; border-left: 4px solid #FF9800;">
+                    <h4 style="margin-bottom: 0.5rem;"><i class="fas fa-sun"></i> 南方气候专属提示</h4>
+                    <p style="opacity: 0.9;">南方湿度大，塑料和纸张请保持干燥，避免发霉影响回收。</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="guide-category" style="background: rgba(30, 40, 60, 0.8); backdrop-filter: blur(20px); border-radius: 20px; overflow: hidden; margin-bottom: 2rem; border: 1px solid rgba(255, 255, 255, 0.1);">
+            <div class="category-header" style="background: linear-gradient(135deg, rgba(76, 175, 80, 0.3) 0%, rgba(139, 195, 74, 0.3) 100%); padding: 1.5rem;">
+                <i class="fas fa-leaf" style="color: #4CAF50; font-size: 2rem;"></i>
+                <h2 style="display: inline; margin-left: 1rem;">厨余垃圾</h2>
+                <span class="color-badge" style="background: #4CAF50; padding: 0.3rem 0.8rem; border-radius: 20px; float: right;">绿色桶</span>
+            </div>
+            <div class="category-body" style="padding: 1.5rem;">
+                <p class="category-desc" style="margin-bottom: 1.5rem; opacity: 0.9;">
+                    厨余垃圾是指易腐烂的生物质生活废弃物，包括剩菜剩饭、果皮果核、茶叶渣、过期食品等。
+                </p>
+                <div class="item-list">
+                    <div class="item-group" style="background: rgba(255, 255, 255, 0.1); border-radius: 12px; padding: 1rem; margin-bottom: 1rem;">
+                        <h4>🍎 果皮果核</h4>
+                        <p style="opacity: 0.8;">苹果核、香蕉皮、西瓜皮、橘子皮等</p>
+                    </div>
+                    <div class="item-group" style="background: rgba(255, 255, 255, 0.1); border-radius: 12px; padding: 1rem; margin-bottom: 1rem;">
+                        <h4>🥬 蔬菜残叶</h4>
+                        <p style="opacity: 0.8;">菜叶、菜根、土豆皮、葱姜蒜皮等</p>
+                    </div>
+                    <div class="item-group" style="background: rgba(255, 255, 255, 0.1); border-radius: 12px; padding: 1rem; margin-bottom: 1rem;">
+                        <h4>🍚 剩菜剩饭</h4>
+                        <p style="opacity: 0.8;">米饭、面条、肉类、鱼骨、蛋壳等</p>
+                    </div>
+                    <div class="item-group" style="background: rgba(255, 255, 255, 0.1); border-radius: 12px; padding: 1rem;">
+                        <h4>🍵 茶叶渣</h4>
+                        <p style="opacity: 0.8;">茶叶渣、中药渣、咖啡渣等</p>
+                    </div>
+                </div>
+                <div style="background: linear-gradient(135deg, rgba(255, 152, 0, 0.2) 0%, rgba(255, 152, 0, 0.1) 100%); border-radius: 12px; padding: 1rem; margin-top: 1rem; border-left: 4px solid #FF9800;">
+                    <h4 style="margin-bottom: 0.5rem;"><i class="fas fa-sun"></i> 南方气候专属提示</h4>
+                    <p style="opacity: 0.9;">南方气候潮湿，厨余垃圾请务必沥干水分，建议用报纸包裹后再丢弃，防止异味和滋生细菌。</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="guide-category" style="background: rgba(30, 40, 60, 0.8); backdrop-filter: blur(20px); border-radius: 20px; overflow: hidden; margin-bottom: 2rem; border: 1px solid rgba(255, 255, 255, 0.1);">
+            <div class="category-header" style="background: linear-gradient(135deg, rgba(158, 158, 158, 0.3) 0%, rgba(117, 117, 117, 0.3) 100%); padding: 1.5rem;">
+                <i class="fas fa-trash" style="color: #9E9E9E; font-size: 2rem;"></i>
+                <h2 style="display: inline; margin-left: 1rem;">其他垃圾</h2>
+                <span class="color-badge" style="background: #9E9E9E; padding: 0.3rem 0.8rem; border-radius: 20px; float: right;">灰色桶</span>
+            </div>
+            <div class="category-body" style="padding: 1.5rem;">
+                <p class="category-desc" style="margin-bottom: 1.5rem; opacity: 0.9;">
+                    其他垃圾是指除可回收物、有害垃圾、厨余垃圾以外的其他生活废弃物。
+                </p>
+                <div class="item-list">
+                    <div class="item-group" style="background: rgba(255, 255, 255, 0.1); border-radius: 12px; padding: 1rem; margin-bottom: 1rem;">
+                        <h4>🧻 卫生用品</h4>
+                        <p style="opacity: 0.8;">卫生纸、纸巾、尿不湿、卫生巾等</p>
+                    </div>
+                    <div class="item-group" style="background: rgba(255, 255, 255, 0.1); border-radius: 12px; padding: 1rem; margin-bottom: 1rem;">
+                        <h4>🚬 烟蒂灰土</h4>
+                        <p style="opacity: 0.8;">烟蒂、灰土、宠物粪便、毛发等</p>
+                    </div>
+                    <div class="item-group" style="background: rgba(255, 255, 255, 0.1); border-radius: 12px; padding: 1rem; margin-bottom: 1rem;">
+                        <h4>🏺 陶瓷制品</h4>
+                        <p style="opacity: 0.8;">碎陶瓷、碎玻璃（非回收）、花盆等</p>
+                    </div>
+                    <div class="item-group" style="background: rgba(255, 255, 255, 0.1); border-radius: 12px; padding: 1rem;">
+                        <h4>🥡 一次性用品</h4>
+                        <p style="opacity: 0.8;">一次性餐具、塑料袋、保鲜膜等</p>
+                    </div>
+                </div>
+                <div style="background: linear-gradient(135deg, rgba(255, 152, 0, 0.2) 0%, rgba(255, 152, 0, 0.1) 100%); border-radius: 12px; padding: 1rem; margin-top: 1rem; border-left: 4px solid #FF9800;">
+                    <h4 style="margin-bottom: 0.5rem;"><i class="fas fa-sun"></i> 南方气候专属提示</h4>
+                    <p style="opacity: 0.9;">潮湿天气请保持干燥，避免污染其他垃圾。</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="guide-category" style="background: rgba(30, 40, 60, 0.8); backdrop-filter: blur(20px); border-radius: 20px; overflow: hidden; border: 1px solid rgba(255, 255, 255, 0.1);">
+            <div class="category-header" style="background: linear-gradient(135deg, rgba(244, 67, 54, 0.3) 0%, rgba(229, 57, 53, 0.3) 100%); padding: 1.5rem;">
+                <i class="fas fa-skull-crossbones" style="color: #F44336; font-size: 2rem;"></i>
+                <h2 style="display: inline; margin-left: 1rem;">有害垃圾</h2>
+                <span class="color-badge" style="background: #F44336; padding: 0.3rem 0.8rem; border-radius: 20px; float: right;">红色桶</span>
+            </div>
+            <div class="category-body" style="padding: 1.5rem;">
+                <p class="category-desc" style="margin-bottom: 1.5rem; opacity: 0.9;">
+                    有害垃圾是指对人体健康或自然环境造成直接或潜在危害的生活废弃物。
+                </p>
+                <div class="item-list">
+                    <div class="item-group" style="background: rgba(255, 255, 255, 0.1); border-radius: 12px; padding: 1rem; margin-bottom: 1rem;">
+                        <h4>🔋 电池类</h4>
+                        <p style="opacity: 0.8;">废电池、蓄电池、纽扣电池等</p>
+                    </div>
+                    <div class="item-group" style="background: rgba(255, 255, 255, 0.1); border-radius: 12px; padding: 1rem; margin-bottom: 1rem;">
+                        <h4>💡 灯管类</h4>
+                        <p style="opacity: 0.8;">废荧光灯管、节能灯、LED灯等</p>
+                    </div>
+                    <div class="item-group" style="background: rgba(255, 255, 255, 0.1); border-radius: 12px; padding: 1rem; margin-bottom: 1rem;">
+                        <h4>💊 药品类</h4>
+                        <p style="opacity: 0.8;">过期药品、药品包装、药瓶等</p>
+                    </div>
+                    <div class="item-group" style="background: rgba(255, 255, 255, 0.1); border-radius: 12px; padding: 1rem;">
+                        <h4>🎨 油漆类</h4>
+                        <p style="opacity: 0.8;">废油漆、油漆桶、杀虫剂等</p>
+                    </div>
+                </div>
+                <div style="background: linear-gradient(135deg, rgba(255, 152, 0, 0.2) 0%, rgba(255, 152, 0, 0.1) 100%); border-radius: 12px; padding: 1rem; margin-top: 1rem; border-left: 4px solid #FF9800;">
+                    <h4 style="margin-bottom: 0.5rem;"><i class="fas fa-sun"></i> 南方气候专属提示</h4>
+                    <p style="opacity: 0.9;">潮湿环境可能导致电池等有害物品泄漏，请尽快投放。</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

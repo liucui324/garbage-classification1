@@ -1,0 +1,186 @@
+{% extends "base.html" %}
+{% set active_page = 'leaderboard' %}
+
+{% block title %}排行榜 - 智能垃圾分类{% endblock %}
+
+{% block content %}
+<div class="leaderboard-page">
+    <div class="leaderboard-header">
+        <h1>🏆 环保排行榜</h1>
+        <p>与社区伙伴一起，共创绿色家园</p>
+    </div>
+
+    <div class="period-tabs" style="display: flex; gap: 1rem; margin-bottom: 2rem;">
+        <button class="period-tab active" onclick="switchPeriod('weekly')" data-period="weekly" style="flex: 1; padding: 1rem; background: linear-gradient(135deg, rgba(156, 39, 176, 0.3) 0%, rgba(103, 58, 183, 0.2) 100%); border: 2px solid #9C27B0; border-radius: 12px; color: #fff; cursor: pointer; transition: all 0.3s; font-size: 1rem;">
+            <i class="fas fa-calendar-week"></i>
+            <span style="margin-left: 0.5rem;">本周榜</span>
+        </button>
+        <button class="period-tab" onclick="switchPeriod('monthly')" data-period="monthly" style="flex: 1; padding: 1rem; background: rgba(255, 255, 255, 0.1); border: 2px solid rgba(255, 255, 255, 0.2); border-radius: 12px; color: #fff; cursor: pointer; transition: all 0.3s; font-size: 1rem;">
+            <i class="fas fa-calendar-alt"></i>
+            <span style="margin-left: 0.5rem;">本月榜</span>
+        </button>
+        <button class="period-tab" onclick="switchPeriod('all')" data-period="all" style="flex: 1; padding: 1rem; background: rgba(255, 255, 255, 0.1); border: 2px solid rgba(255, 255, 255, 0.2); border-radius: 12px; color: #fff; cursor: pointer; transition: all 0.3s; font-size: 1rem;">
+            <i class="fas fa-infinity"></i>
+            <span style="margin-left: 0.5rem;">总榜</span>
+        </button>
+    </div>
+
+    <div class="top-three" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-bottom: 2rem;">
+        <div class="top-card rank-2" style="background: rgba(30, 40, 60, 0.8); backdrop-filter: blur(20px); border-radius: 20px; padding: 1.5rem; text-align: center; border: 2px solid rgba(192, 192, 192, 0.3); opacity: 0.7;">
+            <div style="font-size: 3rem; margin-bottom: 0.5rem;">🥈</div>
+            <div class="avatar" style="width: 60px; height: 60px; background: linear-gradient(135deg, #9E9E9E 0%, #757575 100%); border-radius: 50%; margin: 0 auto 1rem; display: flex; align-items: center; justify-content: center;">
+                <i class="fas fa-user" style="font-size: 1.5rem;"></i>
+            </div>
+            <div class="username" style="font-weight: 600; margin-bottom: 0.3rem;">-</div>
+            <div class="points" style="color: #C0C0C0; font-size: 1.2rem; font-weight: 700;">0分</div>
+        </div>
+        
+        <div class="top-card rank-1" style="background: linear-gradient(135deg, rgba(255, 215, 0, 0.2) 0%, rgba(255, 193, 7, 0.15) 100%); backdrop-filter: blur(20px); border-radius: 20px; padding: 2rem; text-align: center; border: 2px solid rgba(255, 215, 0, 0.5); transform: scale(1.05);">
+            <div style="font-size: 4rem; margin-bottom: 0.5rem;">🥇</div>
+            <div class="avatar" style="width: 80px; height: 80px; background: linear-gradient(135deg, #FFD700 0%, #FFA000 100%); border-radius: 50%; margin: 0 auto 1rem; display: flex; align-items: center; justify-content: center; box-shadow: 0 10px 30px rgba(255, 215, 0, 0.3);">
+                <i class="fas fa-crown" style="font-size: 2rem;"></i>
+            </div>
+            <div class="username" style="font-weight: 700; font-size: 1.2rem; margin-bottom: 0.3rem;">-</div>
+            <div class="points" style="color: #FFD700; font-size: 1.5rem; font-weight: 800;">0分</div>
+        </div>
+        
+        <div class="top-card rank-3" style="background: rgba(30, 40, 60, 0.8); backdrop-filter: blur(20px); border-radius: 20px; padding: 1.5rem; text-align: center; border: 2px solid rgba(205, 127, 50, 0.3); opacity: 0.7;">
+            <div style="font-size: 3rem; margin-bottom: 0.5rem;">🥉</div>
+            <div class="avatar" style="width: 60px; height: 60px; background: linear-gradient(135deg, #CD7F32 0%, #8B4513 100%); border-radius: 50%; margin: 0 auto 1rem; display: flex; align-items: center; justify-content: center;">
+                <i class="fas fa-user" style="font-size: 1.5rem;"></i>
+            </div>
+            <div class="username" style="font-weight: 600; margin-bottom: 0.3rem;">-</div>
+            <div class="points" style="color: #CD7F32; font-size: 1.2rem; font-weight: 700;">0分</div>
+        </div>
+    </div>
+
+    <div class="leaderboard-list" style="background: rgba(30, 40, 60, 0.8); backdrop-filter: blur(20px); border-radius: 20px; padding: 2rem; border: 1px solid rgba(255, 255, 255, 0.1);">
+        <h3 style="margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.8rem;">
+            <i class="fas fa-list-ol" style="color: #9C27B0;"></i>
+            完整排名
+        </h3>
+        <div id="rank-list">
+            <p style="opacity: 0.5; text-align: center;">加载中...</p>
+        </div>
+    </div>
+
+    <div class="user-rank-card" id="user-rank-card" style="display: none; position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%); background: linear-gradient(135deg, rgba(156, 39, 176, 0.95) 0%, rgba(103, 58, 183, 0.95) 100%); backdrop-filter: blur(20px); border-radius: 20px; padding: 1rem 2rem; border: 2px solid rgba(156, 39, 176, 0.5); box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3); z-index: 50;">
+        <div style="display: flex; align-items: center; gap: 1rem;">
+            <i class="fas fa-trophy" style="font-size: 1.5rem; color: #FFD700;"></i>
+            <div>
+                <div style="font-size: 0.9rem; opacity: 0.8;">我的排名</div>
+                <div style="font-size: 1.5rem; font-weight: 700;">第 <span id="my-rank">-</span> 名</div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let currentPeriod = 'weekly';
+
+function switchPeriod(period) {
+    currentPeriod = period;
+    
+    document.querySelectorAll('.period-tab').forEach(btn => {
+        if (btn.dataset.period === period) {
+            btn.style.background = 'linear-gradient(135deg, rgba(156, 39, 176, 0.3) 0%, rgba(103, 58, 183, 0.2) 100%)';
+            btn.style.borderColor = '#9C27B0';
+        } else {
+            btn.style.background = 'rgba(255, 255, 255, 0.1)';
+            btn.style.borderColor = 'rgba(255, 255, 255, 0.2)';
+        }
+    });
+    
+    loadLeaderboard();
+}
+
+function loadLeaderboard() {
+    fetch(`/api/leaderboard?period=${currentPeriod}&limit=20`)
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            renderTopThree(data.leaderboard.slice(0, 3));
+            renderRankList(data.leaderboard);
+            
+            if (data.user_rank) {
+                document.getElementById('my-rank').textContent = data.user_rank;
+                document.getElementById('user-rank-card').style.display = 'block';
+            } else {
+                document.getElementById('user-rank-card').style.display = 'none';
+            }
+        }
+    });
+}
+
+function renderTopThree(top3) {
+    const rank1 = top3[0] || {};
+    const rank2 = top3[1] || {};
+    const rank3 = top3[2] || {};
+    
+    const rank1Card = document.querySelector('.top-card.rank-1');
+    rank1Card.querySelector('.username').textContent = rank1.username || '-';
+    rank1Card.querySelector('.points').textContent = rank1.period_points ? `${rank1.period_points}分` : '0分';
+    
+    const rank2Card = document.querySelector('.top-card.rank-2');
+    rank2Card.querySelector('.username').textContent = rank2.username || '-';
+    rank2Card.querySelector('.points').textContent = rank2.period_points ? `${rank2.period_points}分` : '0分';
+    
+    const rank3Card = document.querySelector('.top-card.rank-3');
+    rank3Card.querySelector('.username').textContent = rank3.username || '-';
+    rank3Card.querySelector('.points').textContent = rank3.period_points ? `${rank3.period_points}分` : '0分';
+}
+
+function renderRankList(leaderboard) {
+    const list = document.getElementById('rank-list');
+    
+    if (leaderboard.length === 0) {
+        list.innerHTML = '<p style="opacity: 0.5; text-align: center;">暂无排行数据</p>';
+        return;
+    }
+    
+    list.innerHTML = leaderboard.map((item, index) => {
+        const rank = index + 1;
+        let rankBadge = '';
+        let rankColor = '#fff';
+        
+        if (rank === 1) {
+            rankBadge = '🥇';
+            rankColor = '#FFD700';
+        } else if (rank === 2) {
+            rankBadge = '🥈';
+            rankColor = '#C0C0C0';
+        } else if (rank === 3) {
+            rankBadge = '🥉';
+            rankColor = '#CD7F32';
+        } else {
+            rankBadge = rank;
+        }
+        
+        return `
+            <div style="display: flex; align-items: center; gap: 1rem; padding: 1rem; background: rgba(255, 255, 255, 0.05); border-radius: 12px; margin-bottom: 0.8rem; ${rank <= 3 ? 'border: 1px solid ' + rankColor + '33;' : ''}">
+                <div style="width: 50px; text-align: center; font-size: 1.5rem; font-weight: 700; color: ${rankColor};">
+                    ${rankBadge}
+                </div>
+                <div class="avatar" style="width: 45px; height: 45px; background: linear-gradient(135deg, #9C27B0 0%, #673AB7 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                    <i class="fas fa-user"></i>
+                </div>
+                <div style="flex: 1;">
+                    <div style="font-weight: 600; margin-bottom: 0.2rem;">${item.username}</div>
+                    <div style="font-size: 0.85rem; opacity: 0.6;">
+                        Lv.${item.level || 1} · 连续${item.continuous_days || 0}天
+                    </div>
+                </div>
+                <div style="text-align: right;">
+                    <div style="font-size: 1.3rem; font-weight: 700; color: #E91E63;">${item.period_points}</div>
+                    <div style="font-size: 0.8rem; opacity: 0.6;">积分</div>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+document.addEventListener('DOMContentLoaded', loadLeaderboard);
+</script>
+{% endblock %}

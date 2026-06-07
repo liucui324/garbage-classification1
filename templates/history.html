@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+{% set active_page = 'history' %}
+
+{% block title %}投放记录 - 智能垃圾分类{% endblock %}
+
+{% block content %}
+<div class="history-page">
+    <div class="history-header">
+        <h1>📋 投放记录</h1>
+        <p>查看您的垃圾分类历史记录</p>
+    </div>
+
+    <div class="history-stats" style="background: rgba(30, 40, 60, 0.8); backdrop-filter: blur(20px); border-radius: 20px; padding: 2rem; margin-bottom: 2rem;">
+        <div class="stat-card" style="display: flex; align-items: center; gap: 1.5rem;">
+            <div style="width: 80px; height: 80px; background: linear-gradient(135deg, #2E7D32 0%, #0288D1 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                <i class="fas fa-trash-alt" style="font-size: 2.5rem;"></i>
+            </div>
+            <div>
+                <h3 style="opacity: 0.7; font-weight: normal;">总投放次数</h3>
+                <p style="font-size: 3rem; font-weight: 700;" id="total-count">0</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="history-list" id="history-list">
+        <div class="empty-state" id="empty-state" style="text-align: center; padding: 4rem 2rem; background: rgba(30, 40, 60, 0.8); backdrop-filter: blur(20px); border-radius: 20px;">
+            <i class="fas fa-inbox" style="font-size: 4rem; opacity: 0.5; margin-bottom: 1rem;"></i>
+            <p style="font-size: 1.2rem; margin-bottom: 1rem;">暂无投放记录</p>
+            <a href="/scan" class="link-btn" style="display: inline-block; padding: 1rem 2rem; background: linear-gradient(135deg, #2E7D32 0%, #0288D1 100%); border-radius: 12px; text-decoration: none; color: #fff;">
+                <i class="fas fa-camera"></i>
+                开始识别
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function loadHistory() {
+    fetch('/api/history')
+    .then(response => response.json())
+    .then(data => {
+        if (data.records && data.records.length > 0) {
+            document.getElementById('total-count').textContent = data.records.length;
+            renderRecords(data.records);
+        }
+    })
+    .catch(err => console.error('加载记录失败:', err));
+}
+
+function renderRecords(records) {
+    const container = document.getElementById('history-list');
+    document.getElementById('empty-state').style.display = 'none';
+    
+    const categoryColors = {
+        '可回收物': '#2196F3',
+        '厨余垃圾': '#4CAF50',
+        '其他垃圾': '#9E9E9E',
+        '有害垃圾': '#F44336'
+    };
+    
+    const html = records.map(record => {
+        const color = categoryColors[record.category] || '#9E9E9E';
+        const date = new Date(record.timestamp).toLocaleString('zh-CN');
+        
+        return `
+            <div class="result-card" style="background: rgba(30, 40, 60, 0.8); backdrop-filter: blur(20px); border-radius: 20px; overflow: hidden; margin-bottom: 1rem; border: 1px solid rgba(255, 255, 255, 0.1);">
+                <div class="result-header" style="background: linear-gradient(135deg, ${color}33 0%, ${color}66 100%); padding: 1.2rem;">
+                    <h2 style="font-size: 1.2rem;">${record.item_name || '未知物品'}</h2>
+                </div>
+                <div class="result-body" style="padding: 1rem;">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <span class="category-badge" style="background: ${color}; padding: 0.5rem 1rem; border-radius: 20px; font-size: 0.9rem;">
+                            ${record.category}
+                        </span>
+                        <span style="opacity: 0.7; font-size: 0.9rem;">${date}</span>
+                    </div>
+                </div>
+            </div>
+        `;
+    }).join('');
+    
+    container.innerHTML = html;
+}
+
+document.addEventListener('DOMContentLoaded', loadHistory);
+</script>
+{% endblock %}

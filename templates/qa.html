@@ -1,0 +1,767 @@
+{% extends "base.html" %}
+{% set active_page = 'qa' %}
+
+{% block title %}智能问答 - 智能垃圾分类{% endblock %}
+
+{% block content %}
+<div class="qa-page">
+    <div class="qa-header">
+        <h1>智能问答</h1>
+        <p>语音或文字提问，AI快速解答垃圾分类问题</p>
+    </div>
+
+    <div class="qa-container">
+        <div class="ai-mode-toggle" id="ai-mode-container" style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1.5rem; padding: 1.2rem 1.5rem; background: rgba(255, 255, 255, 0.08); border-radius: 16px; border: 2px solid transparent; transition: all 0.4s ease;">
+            <div style="flex: 1;">
+                <div style="display: flex; align-items: center; gap: 0.8rem; margin-bottom: 0.3rem;">
+                    <span style="font-size: 1rem; font-weight: 500;">回答模式</span>
+                    <span id="ai-status-text" style="opacity: 0.7; font-size: 0.9rem;">检测中...</span>
+                </div>
+                <div id="ai-detail-text" style="opacity: 0.6; font-size: 0.85rem;"></div>
+            </div>
+            <div style="display: flex; align-items: center; gap: 0.8rem;">
+                <button onclick="refreshAiStatus()" id="refresh-ai-btn" title="重新检测大模型" style="padding: 0.6rem; background: rgba(255,255,255,0.1); border: none; border-radius: 10px; color: #fff; cursor: pointer; transition: all 0.3s;">
+                    <i class="fas fa-sync-alt"></i>
+                </button>
+                <label class="toggle-switch" style="position: relative; display: inline-block; width: 60px; height: 32px;" id="ai-toggle-label">
+                    <input type="checkbox" id="ai-mode-toggle" onchange="toggleAiMode()" style="opacity: 0; width: 0; height: 0;">
+                    <span class="slider" id="ai-slider" style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(255,255,255,0.2); transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55); border-radius: 32px;"></span>
+                    <style>
+                        .toggle-switch .slider:before { position: absolute; content: ""; height: 24px; width: 24px; left: 4px; bottom: 4px; background-color: white; transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55); border-radius: 50%; box-shadow: 0 2px 8px rgba(0,0,0,0.2); }
+                        .toggle-switch input:checked + .slider { background: linear-gradient(135deg, #9C27B0 0%, #673AB7 100%) !important; box-shadow: 0 0 20px rgba(156, 39, 176, 0.5); }
+                        .toggle-switch input:checked + .slider:before { transform: translateX(28px); }
+                        .toggle-switch input:disabled + .slider { opacity: 0.4; cursor: not-allowed; }
+                        
+                        @keyframes ai-glow {
+                            0%, 100% { box-shadow: 0 0 15px rgba(156, 39, 176, 0.4), inset 0 0 10px rgba(156, 39, 176, 0.1); }
+                            50% { box-shadow: 0 0 25px rgba(156, 39, 176, 0.6), inset 0 0 15px rgba(156, 39, 176, 0.15); }
+                        }
+                        
+                        @keyframes pulse-ring {
+                            0% { transform: scale(1); opacity: 0.8; }
+                            100% { transform: scale(1.15); opacity: 0; }
+                        }
+                        
+                        .ai-available-mode {
+                            background: linear-gradient(135deg, rgba(156, 39, 176, 0.12) 0%, rgba(103, 58, 183, 0.08) 100%) !important;
+                            border-color: rgba(156, 39, 176, 0.35) !important;
+                            animation: ai-glow 2s ease-in-out infinite;
+                        }
+                        
+                        .ai-slider-available {
+                            background: linear-gradient(135deg, rgba(156, 39, 176, 0.4) 0%, rgba(103, 58, 183, 0.3) 100%) !important;
+                            position: relative;
+                        }
+                        
+                        .ai-slider-available::after {
+                            content: '';
+                            position: absolute;
+                            top: -3px;
+                            left: -3px;
+                            right: -3px;
+                            bottom: -3px;
+                            border-radius: 32px;
+                            background: linear-gradient(135deg, #9C27B0, #673AB7);
+                            z-index: -1;
+                            opacity: 0;
+                            transition: opacity 0.3s;
+                        }
+                        
+                        .ai-badge {
+                            display: inline-flex;
+                            align-items: center;
+                            gap: 0.4rem;
+                            padding: 0.25rem 0.65rem;
+                            background: linear-gradient(135deg, #9C27B0 0%, #673AB7 100%);
+                            border-radius: 20px;
+                            font-size: 0.85rem;
+                            font-weight: 600;
+                            color: white;
+                            box-shadow: 0 3px 12px rgba(156, 39, 176, 0.4);
+                            animation: badge-pulse 2s ease-in-out infinite;
+                        }
+                        
+                        @keyframes badge-pulse {
+                            0%, 100% { transform: scale(1); }
+                            50% { transform: scale(1.05); }
+                        }
+                    </style>
+                </label>
+                <span id="ai-mode-badge" style="display: none;"></span>
+            </div>
+        </div>
+
+        <div class="input-methods" style="display: flex; gap: 1rem; margin-bottom: 1.5rem;">
+            <button class="method-btn active" id="text-method" onclick="switchMethod('text')" style="flex: 1; padding: 1rem; background: rgba(46, 125, 50, 0.3); border: 2px solid #2E7D32; border-radius: 12px; color: #fff; cursor: pointer; transition: all 0.3s;">
+                <i class="fas fa-keyboard"></i>
+                <span style="margin-left: 0.5rem;">文字输入</span>
+            </button>
+            <button class="method-btn" id="voice-method" onclick="switchMethod('voice')" style="flex: 1; padding: 1rem; background: rgba(255, 255, 255, 0.1); border: 2px solid rgba(255, 255, 255, 0.2); border-radius: 12px; color: #fff; cursor: pointer; transition: all 0.3s;">
+                <i class="fas fa-microphone"></i>
+                <span style="margin-left: 0.5rem;">语音输入</span>
+            </button>
+        </div>
+
+        <div id="text-input-area">
+            <div class="text-input-box" style="display: flex; gap: 1rem;">
+                <input type="text" id="question-input" placeholder="例如：奶茶杯是什么垃圾？" onkeypress="if(event.key==='Enter')askQuestion()" style="flex: 1; padding: 1rem 1.5rem; background: rgba(255, 255, 255, 0.1); border: 2px solid rgba(255, 255, 255, 0.2); border-radius: 12px; color: #fff; font-size: 1.1rem;">
+                <button class="ask-btn" onclick="askQuestion()" style="padding: 1rem 2rem; background: linear-gradient(135deg, #2E7D32 0%, #0288D1 100%); border: none; border-radius: 12px; color: white; font-size: 1.1rem; cursor: pointer;">
+                    <i class="fas fa-paper-plane"></i>
+                    <span style="margin-left: 0.5rem;">提问</span>
+                </button>
+            </div>
+        </div>
+
+        <div id="voice-input-area" style="display: none;">
+            <div class="voice-input-box" style="text-align: center; padding: 2rem; background: rgba(255, 255, 255, 0.1); border-radius: 16px;">
+                <button class="voice-btn" id="voice-btn" onclick="toggleVoice()" style="width: 120px; height: 120px; background: linear-gradient(135deg, #2E7D32 0%, #0288D1 100%); border: none; border-radius: 50%; color: white; font-size: 2.5rem; cursor: pointer; transition: all 0.3s;">
+                    <i class="fas fa-microphone"></i>
+                </button>
+                <p class="voice-tip" style="margin-top: 1rem; opacity: 0.7;">点击按钮开始语音输入</p>
+            </div>
+        </div>
+
+        <div class="quick-questions" style="margin-top: 2rem;">
+            <h3 style="margin-bottom: 1rem;"><i class="fas fa-lightbulb"></i> 常见问题</h3>
+            <div class="question-chips" style="display: flex; flex-wrap: wrap; gap: 0.8rem;">
+                <button class="chip" onclick="quickAsk('苹果核是什么垃圾？')" style="padding: 0.8rem 1.2rem; background: rgba(255, 255, 255, 0.1); border: none; border-radius: 20px; color: #fff; cursor: pointer; transition: all 0.3s;">🍎 苹果核是什么垃圾？</button>
+                <button class="chip" onclick="quickAsk('奶茶杯怎么分？')" style="padding: 0.8rem 1.2rem; background: rgba(255, 255, 255, 0.1); border: none; border-radius: 20px; color: #fff; cursor: pointer; transition: all 0.3s;">🥤 奶茶杯怎么分？</button>
+                <button class="chip" onclick="quickAsk('纸巾是湿垃圾吗？')" style="padding: 0.8rem 1.2rem; background: rgba(255, 255, 255, 0.1); border: none; border-radius: 20px; color: #fff; cursor: pointer; transition: all 0.3s;">🧻 纸巾是湿垃圾吗？</button>
+                <button class="chip" onclick="quickAsk('电池扔哪里？')" style="padding: 0.8rem 1.2rem; background: rgba(255, 255, 255, 0.1); border: none; border-radius: 20px; color: #fff; cursor: pointer; transition: all 0.3s;">🔋 电池扔哪里？</button>
+                <button class="chip" onclick="quickAsk('塑料袋可以回收吗？')" style="padding: 0.8rem 1.2rem; background: rgba(255, 255, 255, 0.1); border: none; border-radius: 20px; color: #fff; cursor: pointer; transition: all 0.3s;">🛍️ 塑料袋可以回收吗？</button>
+                <button class="chip" onclick="quickAsk('鱼骨算什么垃圾？')" style="padding: 0.8rem 1.2rem; background: rgba(255, 255, 255, 0.1); border: none; border-radius: 20px; color: #fff; cursor: pointer; transition: all 0.3s;">🐟 鱼骨算什么垃圾？</button>
+            </div>
+        </div>
+
+        <div class="answer-container" id="answer-container" style="display: none; margin-top: 2rem;">
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let recognition = null;
+let isListening = false;
+
+function switchMethod(method) {
+    const textArea = document.getElementById('text-input-area');
+    const voiceArea = document.getElementById('voice-input-area');
+    const textBtn = document.getElementById('text-method');
+    const voiceBtn = document.getElementById('voice-method');
+    
+    if (method === 'text') {
+        textArea.style.display = 'block';
+        voiceArea.style.display = 'none';
+        textBtn.style.background = 'rgba(46, 125, 50, 0.3)';
+        textBtn.style.borderColor = '#2E7D32';
+        voiceBtn.style.background = 'rgba(255, 255, 255, 0.1)';
+        voiceBtn.style.borderColor = 'rgba(255, 255, 255, 0.2)';
+    } else {
+        textArea.style.display = 'none';
+        voiceArea.style.display = 'block';
+        voiceBtn.style.background = 'rgba(46, 125, 50, 0.3)';
+        voiceBtn.style.borderColor = '#2E7D32';
+        textBtn.style.background = 'rgba(255, 255, 255, 0.1)';
+        textBtn.style.borderColor = 'rgba(255, 255, 255, 0.2)';
+    }
+}
+
+function askQuestion() {
+    const input = document.getElementById('question-input');
+    const question = input.value.trim();
+    
+    if (!question) {
+        alert('请输入问题');
+        return;
+    }
+    
+    input.value = '';
+    sendQuestion(question);
+}
+
+function quickAsk(question) {
+    document.getElementById('question-input').value = question;
+    sendQuestion(question);
+}
+
+function sendQuestion(question) {
+    const useAi = document.getElementById('ai-mode-toggle').checked;
+    
+    fetch('/api/qa', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ question, use_ai: useAi })
+    })
+    .then(response => response.json())
+    .then(data => {
+        showAnswer(question, data);
+    })
+    .catch(err => {
+        alert('问答失败，请重试');
+        console.error(err);
+    });
+}
+
+let aiAvailable = false;
+let useAiMode = false;
+
+function checkAiStatus() {
+    fetch('/api/ai_status')
+    .then(response => response.json())
+    .then(data => {
+        updateAiStatusUI(data);
+    })
+    .catch(err => {
+        console.error('检测AI状态失败:', err);
+        document.getElementById('ai-status-text').textContent = '规则匹配模式（离线）';
+        document.getElementById('ai-status-text').style.color = '#FF9800';
+        document.getElementById('ai-detail-text').textContent = '';
+        document.getElementById('ai-mode-toggle').disabled = true;
+        document.getElementById('ai-mode-container').classList.remove('ai-available-mode');
+        document.getElementById('ai-slider').classList.remove('ai-slider-available');
+        document.getElementById('ai-mode-badge').style.display = 'none';
+    });
+}
+
+function refreshAiStatus() {
+    const btn = document.getElementById('refresh-ai-btn');
+    const icon = btn.querySelector('i');
+    
+    icon.classList.add('fa-spin');
+    document.getElementById('ai-status-text').textContent = '检测中...';
+    document.getElementById('ai-detail-text').textContent = '正在连接大模型服务...';
+    document.getElementById('ai-status-text').style.color = '#fff';
+    
+    fetch('/api/ai_status?refresh=true')
+    .then(response => response.json())
+    .then(data => {
+        icon.classList.remove('fa-spin');
+        updateAiStatusUI(data);
+    })
+    .catch(err => {
+        icon.classList.remove('fa-spin');
+        console.error('刷新AI状态失败:', err);
+        document.getElementById('ai-status-text').textContent = '检测失败';
+        document.getElementById('ai-status-text').style.color = '#F44336';
+        document.getElementById('ai-detail-text').textContent = '请检查网络连接或服务状态';
+        document.getElementById('ai-mode-container').classList.remove('ai-available-mode');
+        document.getElementById('ai-slider').classList.remove('ai-slider-available');
+        document.getElementById('ai-mode-badge').style.display = 'none';
+    });
+}
+
+function updateAiStatusUI(data) {
+    aiAvailable = data.available;
+    const statusText = document.getElementById('ai-status-text');
+    const detailText = document.getElementById('ai-detail-text');
+    const toggle = document.getElementById('ai-mode-toggle');
+    const container = document.getElementById('ai-mode-container');
+    const slider = document.getElementById('ai-slider');
+    const badge = document.getElementById('ai-mode-badge');
+    
+    if (data.available) {
+        statusText.innerHTML = '<i class="fas fa-brain" style="margin-right: 0.3rem;"></i>AI模式可用';
+        statusText.style.color = '#CE93D8';
+        statusText.style.fontWeight = '600';
+        toggle.disabled = false;
+        
+        container.classList.add('ai-available-mode');
+        slider.classList.add('ai-slider-available');
+        
+        badge.style.display = 'inline-flex';
+        badge.className = 'ai-badge';
+        badge.innerHTML = '<i class="fas fa-robot"></i> AI';
+        
+        let detail = `<i class="fas fa-microchip" style="margin-right: 0.3rem;"></i>模型: ${data.model}`;
+        if (data.model_found) {
+            detail += ' <span style="color: #A5D6A7;">✓ 已加载</span>';
+            detailText.style.color = '#B39DDB';
+        } else {
+            detail += ' <span style="color: #FFB74D;">⚠ 未找到</span>';
+            detailText.style.color = '#CE93D8';
+        }
+        
+        if (data.available_models && data.available_models.length > 0) {
+            detail += ` | <i class="fas fa-check-circle" style="margin-right: 0.2rem; color: #4CAF50;"></i>${data.available_models.slice(0, 3).join(', ')}`;
+        }
+        detailText.innerHTML = detail;
+    } else {
+        statusText.textContent = '规则匹配模式（离线）';
+        statusText.style.color = '#FF9800';
+        statusText.style.fontWeight = 'normal';
+        toggle.disabled = true;
+        toggle.checked = false;
+        
+        container.classList.remove('ai-available-mode');
+        slider.classList.remove('ai-slider-available');
+        
+        badge.style.display = 'none';
+        
+        if (data.base_url) {
+            detailText.innerHTML = `<i class="fas fa-unlink" style="margin-right: 0.3rem;"></i>无法连接: ${data.base_url.replace('/v1/', '')} | 请确认LM Studio/Ollama已启动`;
+        } else {
+            detailText.textContent = data.message || '';
+            detailText.innerHTML = `<i class="fas fa-exclamation-triangle" style="margin-right: 0.3rem;"></i>${data.message || ''}`;
+        }
+        detailText.style.color = '#FF9800';
+    }
+}
+
+function toggleAiMode() {
+    const toggle = document.getElementById('ai-mode-toggle');
+    useAiMode = toggle.checked;
+    localStorage.setItem('qa_ai_mode', useAiMode ? 'true' : 'false');
+}
+
+function showAnswer(question, data) {
+    const container = document.getElementById('answer-container');
+    container.style.display = 'block';
+    
+    const categoryColors = {
+        '可回收物': '#2196F3',
+        '厨余垃圾': '#4CAF50',
+        '其他垃圾': '#9E9E9E',
+        '有害垃圾': '#F44336'
+    };
+    
+    const color = categoryColors[data.category] || '#9E9E9E';
+    
+    speak(data.answer);
+    
+    const sourceBadge = (data.source === 'ai' || data.source === 'ai_retry') && !data.category
+        ? '<span style="display: inline-block; background: linear-gradient(135deg, #9C27B0 0%, #673AB7 100%); padding: 0.6rem 1.2rem; border-radius: 25px; font-size: 0.9rem; box-shadow: 0 4px 15px rgba(156, 39, 176, 0.4);"><i class="fas fa-brain"></i> AI大模型完整回答</span>'
+        : data.source === 'ai'
+        ? '<span style="display: inline-block; background: linear-gradient(135deg, #2196F3 0%, #9C27B0 100%); padding: 0.5rem 1rem; border-radius: 20px; font-size: 0.85rem;"><i class="fas fa-robot"></i> AI智能回答</span>'
+        : data.source === 'ai_retry'
+        ? '<span style="display: inline-block; background: linear-gradient(135deg, #9C27B0 0%, #673AB7 100%); padding: 0.5rem 1rem; border-radius: 20px; font-size: 0.85rem;"><i class="fas fa-redo"></i> AI重试成功</span>'
+        : data.source === 'rule_fallback'
+        ? '<span style="display: inline-block; background: rgba(255,152,0,0.3); padding: 0.5rem 1rem; border-radius: 20px; font-size: 0.85rem;"><i class="fas fa-database"></i> 规则匹配</span>'
+        : data.source === 'unavailable'
+        ? '<span style="display: inline-block; background: rgba(244,67,54,0.3); padding: 0.5rem 1rem; border-radius: 20px; font-size: 0.85rem;"><i class="fas fa-exclamation-circle"></i> 暂无答案</span>'
+        : '<span style="display: inline-block; background: rgba(255,255,255,0.15); padding: 0.5rem 1rem; border-radius: 20px; font-size: 0.85rem;"><i class="fas fa-book"></i> 规则匹配</span>';
+    
+    let formattedAnswer = '';
+    
+    if ((data.source === 'ai' || data.source === 'ai_retry') && !data.category) {
+        formattedAnswer = formatFullAiAnswer(data.answer);
+    } else if (data.source === 'ai') {
+    } else {
+        formattedAnswer = `<div style="background: rgba(255, 255, 255, 0.08); border-radius: 14px; padding: 1.2rem; margin-bottom: 1rem;">
+            <p style="font-size: 1.15rem; line-height: 1.8; opacity: 0.95;">${data.answer}</p>
+        </div>`;
+    }
+    
+    container.innerHTML = `
+        <div style="background: rgba(30, 40, 60, 0.8); backdrop-filter: blur(20px); border-radius: 24px; padding: 2.5rem; border: 1px solid rgba(255, 255, 255, 0.1);">
+            <div style="margin-bottom: 1.5rem; padding-bottom: 1.5rem; border-bottom: 1px solid rgba(255, 255, 255, 0.1);">
+                <p style="opacity: 0.7; font-size: 1.05rem; display: flex; align-items: center; gap: 0.6rem;">
+                    <i class="fas fa-question-circle" style="color: #FF9800;"></i> 
+                    ${question}
+                </p>
+                <div style="margin-top: 0.8rem;">${sourceBadge}</div>
+            </div>
+            
+            ${formattedAnswer}
+            
+            ${data.category ? `
+            <div style="margin-top: 1.5rem; padding: 1.2rem; background: linear-gradient(135deg, ${color}22 0%, ${color}11 100%); border-left: 4px solid ${color}; border-radius: 12px; display: flex; align-items: center; gap: 1rem;">
+                <i class="fas fa-tag" style="font-size: 1.8rem; color: ${color};"></i>
+                <div>
+                    <div style="font-size: 1.25rem; font-weight: 600; color: ${color};">分类结果</div>
+                    <div style="opacity: 0.85;">${data.category}</div>
+                </div>
+            </div>
+            ` : ''}
+            
+            ${data.tip && data.source !== 'ai' ? `
+            <div style="background: rgba(33, 150, 243, 0.12); border-radius: 16px; padding: 1.5rem; margin-top: 1.2rem;">
+                <h4 style="margin-bottom: 0.8rem; color: #2196F3; font-size: 1.1rem;"><i class="fas fa-lightbulb"></i> 投放提示</h4>
+                <p style="opacity: 0.9; line-height: 1.7;">${data.tip}</p>
+            </div>
+            ` : ''}
+            
+            ${data.south_tip && data.source !== 'ai' ? `
+            <div style="background: linear-gradient(135deg, rgba(255, 152, 0, 0.18) 0%, rgba(255, 152, 0, 0.08) 100%); border-radius: 16px; padding: 1.5rem; margin-top: 1.2rem; border-left: 4px solid #FF9800;">
+                <h4 style="margin-bottom: 0.8rem; color: #FF9800; font-size: 1.1rem;"><i class="fas fa-sun"></i> 南方气候专属提示</h4>
+                <p style="opacity: 0.9; line-height: 1.7;">${data.south_tip}</p>
+            </div>
+            ` : ''}
+            
+            <button onclick="speak('${data.answer.replace(/'/g, "\\'").replace(/\n/g, ' ')}')" style="width: 100%; margin-top: 2rem; padding: 1.3rem; background: ${(data.source === 'ai' || data.source === 'ai_retry') && !data.category ? 'linear-gradient(135deg, #9C27B0 0%, #673AB7 100%)' : data.source === 'unavailable' ? 'linear-gradient(135deg, #F44336 0%, #E91E63 100%)' : 'linear-gradient(135deg, rgba(46, 125, 50, 0.35) 0%, rgba(2, 136, 209, 0.35) 100%)'}; border: none; border-radius: 16px; color: #fff; font-size: 1.1rem; cursor: pointer; transition: all 0.3s; box-shadow: ${(data.source === 'ai' || data.source === 'ai_retry') && !data.category ? '0 6px 25px rgba(156, 39, 176, 0.4)' : data.source === 'unavailable' ? '0 4px 15px rgba(244, 67, 54, 0.3)' : 'none'};" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
+                <i class="fas fa-volume-up"></i> 语音播报
+            </button>
+            <div class="volume-control" style="margin-top: 1rem; display: flex; align-items: center; gap: 0.8rem; padding: 1rem; background: rgba(255, 255, 255, 0.06); border-radius: 12px;">
+                <i class="fas fa-volume-down" style="color: #9E9E9E;"></i>
+                <input type="range" min="0" max="1" step="0.1" value="${localStorage.getItem('speechVolume') || 0.8}" onchange="setVolume(this.value)" style="flex: 1; height: 6px; cursor: pointer;">
+                <i class="fas fa-volume-up" style="color: #2196F3;"></i>
+                <span id="volume-display" style="min-width: 45px; font-size: 0.9rem; text-align: right;">${Math.round((localStorage.getItem('speechVolume') || 0.8) * 100)}%</span>
+            </div>
+        </div>
+    `;
+}
+
+function formatFullAiAnswer(answer) {
+    const sections = [
+        { name: '分类结果', icon: 'fa-tag', color: '#9C27B0', gradient: 'linear-gradient(135deg, #9C27B0 0%, #673AB7 100%)' },
+        { name: '详细解释', icon: 'fa-lightbulb', color: '#2196F3', gradient: 'linear-gradient(135deg, #2196F3 0%, #00BCD4 100%)' },
+        { name: '正确投放方法', icon: 'fa-check-circle', color: '#4CAF50', gradient: 'linear-gradient(135deg, #4CAF50 0%, #8BC34A 100%)' },
+        { name: '珠海气候专属提醒', icon: 'fa-sun', color: '#FF9800', gradient: 'linear-gradient(135deg, #FF9800 0%, #FF5722 100%)' },
+        { name: '常见误区', icon: 'fa-exclamation-triangle', color: '#F44336', gradient: 'linear-gradient(135deg, #F44336 0%, #E91E63 100%)' }
+    ];
+    
+    let html = '';
+    
+    html += `<div style="background: linear-gradient(135deg, rgba(156, 39, 176, 0.15) 0%, rgba(103, 58, 183, 0.1) 100%); border-radius: 20px; padding: 1.8rem; margin-bottom: 1.5rem; border: 2px solid rgba(156, 39, 176, 0.3); position: relative; overflow: hidden;">
+        <div style="position: absolute; top: -30px; right: -30px; width: 120px; height: 120px; background: radial-gradient(circle, rgba(156, 39, 176, 0.2) 0%, transparent 70%); border-radius: 50%;"></div>
+        <div style="position: absolute; bottom: -40px; left: -40px; width: 150px; height: 150px; background: radial-gradient(circle, rgba(103, 58, 183, 0.15) 0%, transparent 70%); border-radius: 50%;"></div>
+        <div style="position: relative; z-index: 1;">
+            <div style="display: flex; align-items: center; gap: 0.8rem; margin-bottom: 1rem;">
+                <div style="width: 50px; height: 50px; background: linear-gradient(135deg, #9C27B0 0%, #673AB7 100%); border-radius: 14px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 15px rgba(156, 39, 176, 0.4);">
+                    <i class="fas fa-robot" style="font-size: 1.5rem; color: white;"></i>
+                </div>
+                <div>
+                    <div style="font-size: 1.35rem; font-weight: 700; color: #E1BEE7;">AI 智能分析</div>
+                    <div style="font-size: 0.9rem; opacity: 0.7; color: #CE93D8;">大模型完整回答</div>
+                </div>
+            </div>
+            <div style="font-size: 0.95rem; line-height: 1.8; opacity: 0.92; color: #E1BEE7;">
+                以下内容由AI大模型生成，包含完整的分类分析和实用建议
+            </div>
+        </div>
+    </div>`;
+    
+    const lines = answer.split('\n');
+    let currentSection = null;
+    let sectionContent = [];
+    
+    for (const rawLine of lines) {
+        const line = rawLine.trim();
+        
+        if (!line) continue;
+        
+        let matched = false;
+        
+        for (const section of sections) {
+            if (line.includes('【' + section.name + '】')) {
+                if (currentSection && sectionContent.length > 0) {
+                    const config = sections.find(s => s.name === currentSection);
+                    if (config) {
+                        html += renderFullAiSection(currentSection, sectionContent.join('\n'), config);
+                    }
+                }
+                
+                currentSection = section.name;
+                sectionContent = [];
+                matched = true;
+                break;
+            }
+        }
+        
+        if (!matched && currentSection) {
+            sectionContent.push(line);
+        } else if (!matched && !currentSection && line) {
+            currentSection = '分类结果';
+            sectionContent.push(line);
+        }
+    }
+    
+    if (currentSection && sectionContent.length > 0) {
+        const config = sections.find(s => s.name === currentSection);
+        if (config) {
+            html += renderFullAiSection(currentSection, sectionContent.join('\n'), config);
+        }
+    }
+    
+    return html;
+}
+
+function renderFullAiSection(title, content, config) {
+    let formattedContent = content.split('\n').map(line => {
+        line = line.replace(/^[-*•]\s*/, '').trim();
+        
+        if (/^\d+[.、）)]/.test(line)) {
+            return `<div style="display: flex; align-items: flex-start; gap: 0.6rem; padding: 0.4rem 0;">
+                <span style="min-width: 22px; height: 22px; background: ${config.gradient}; border-radius: 6px; display: inline-flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 600; color: white; margin-top: 0.15rem;">✓</span>
+                <span style="flex: 1; line-height: 1.7;">${line}</span>
+            </div>`;
+        }
+        
+        return `<div style="padding: 0.3rem 0; line-height: 1.75;">${line}</div>`;
+    }).join('');
+    
+    return `
+    <div style="margin-bottom: 1.3rem; background: linear-gradient(135deg, ${config.color}12 0%, ${config.color}08 100%); border-radius: 18px; overflow: hidden; border: 1px solid ${config.color}25; box-shadow: 0 4px 20px ${config.color}10;">
+        <div style="background: ${config.gradient}; padding: 1rem 1.5rem; display: flex; align-items: center; gap: 0.8rem;">
+            <i class="fas ${config.icon}" style="font-size: 1.3rem; color: white;"></i>
+            <span style="font-size: 1.15rem; font-weight: 700; color: white;">${title}</span>
+        </div>
+        <div style="padding: 1.5rem; font-size: 1.05rem; line-height: 1.8; opacity: 0.95;">
+            ${formattedContent}
+        </div>
+    </div>`;
+}
+
+function formatAiAnswer(answer, color) {
+    const sections = {
+        '分类结果': { icon: 'fa-tag', bg: `${color}22`, border: color },
+        '详细解释': { icon: 'fa-info-circle', bg: 'rgba(33,150,243,0.12)', border: '#2196F3' },
+        '正确投放方法': { icon: 'fa-check-circle', bg: 'rgba(76,175,80,0.12)', border: '#4CAF50' },
+        '珠海气候专属提醒': { icon: 'fa-sun', bg: 'rgba(255,152,0,0.15)', border: '#FF9800' },
+        '常见误区': { icon: 'fa-exclamation-triangle', bg: 'rgba(244,67,54,0.12)', border: '#F44336' }
+    };
+    
+    let html = '';
+    let currentSection = null;
+    let content = [];
+    
+    const lines = answer.split('\n').map(line => line.trim()).filter(line => line);
+    
+    for (const line of lines) {
+        let sectionMatch = false;
+        
+        for (const [sectionName, config] of Object.entries(sections)) {
+            if (line.includes('【' + sectionName + '】') || line.includes(sectionName)) {
+                if (currentSection && content.length > 0) {
+                    html += renderSection(currentSection, content.join('<br>'), sections[currentSection]);
+                }
+                currentSection = sectionName;
+                content = [];
+                sectionMatch = true;
+                break;
+            }
+        }
+        
+        if (!sectionMatch && currentSection) {
+            content.push(formatLine(line));
+        } else if (!sectionMatch && !currentSection) {
+            if (!currentSection) {
+                currentSection = '分类结果';
+                content = [formatLine(line)];
+            }
+        }
+    }
+    
+    if (currentSection && content.length > 0) {
+        html += renderSection(currentSection, content.join('<br>'), sections[currentSection]);
+    }
+    
+    return html;
+}
+
+function renderSection(title, content, config) {
+    return `
+    <div style="background: ${config.bg}; border-radius: 14px; padding: 1.3rem; margin-bottom: 1rem; border-left: 4px solid ${config.border};">
+        <h4 style="margin-bottom: 0.8rem; font-size: 1.08rem; color: ${config.border}; display: flex; align-items: center; gap: 0.6rem;">
+            <i class="fas ${config.icon}"></i> ${title}
+        </h4>
+        <div style="line-height: 1.75; opacity: 0.92; font-size: 1.02rem;">${content}</div>
+    </div>`;
+}
+
+function formatLine(line) {
+    line = line.replace(/^[-*•]\s*/, '');
+    line = line.replace(/^\d+[.、）)]\s*/, '');
+    
+    if (/^[\d]+[.、)]/.test(line)) {
+        return `<div style="padding: 0.3rem 0;">${line}</div>`;
+    }
+    
+    return `<div style="padding: 0.25rem 0;">${line}</div>`;
+}
+
+let currentSpeechText = '';
+let speechCharIndex = 0;
+let isAdjustingVolume = false;
+
+function speak(text, startIndex = 0) {
+    if ('speechSynthesis' in window) {
+        let textToSpeak = cleanTextForSpeech(text.substring(startIndex));
+        if (!textToSpeak.trim()) return;
+        
+        currentSpeechText = text;
+        speechCharIndex = startIndex;
+        speechSynthesis.cancel();
+        
+        const volume = parseFloat(localStorage.getItem('speechVolume') || 0.8);
+        const utterance = new SpeechSynthesisUtterance(textToSpeak);
+        utterance.lang = 'zh-CN';
+        utterance.rate = 0.9;
+        utterance.pitch = 1;
+        utterance.volume = volume;
+        
+        utterance.onboundary = (event) => {
+            if (event.name === 'word') {
+                speechCharIndex = startIndex + event.charIndex;
+            }
+        };
+        
+        utterance.onend = () => {
+            if (!isAdjustingVolume) {
+                currentSpeechText = '';
+                speechCharIndex = 0;
+            }
+        };
+        
+        console.log('语音播报音量:', volume, ', 从第', startIndex, '个字符开始');
+        
+        speechSynthesis.speak(utterance);
+    }
+}
+
+function cleanTextForSpeech(text) {
+    let cleaned = text;
+    
+    cleaned = cleaned.replace(/\*\*/g, '');
+    cleaned = cleaned.replace(/\*/g, '');
+    cleaned = cleaned.replace(/【/g, '');
+    cleaned = cleaned.replace(/】/g, '，');
+    cleaned = cleaned.replace(/《/g, '');
+    cleaned = cleaned.replace(/》/g, '');
+    cleaned = cleaned.replace(/（/g, '，');
+    cleaned = cleaned.replace(/）/g, '');
+    cleaned = cleaned.replace(/──/g, '，');
+    cleaned = cleaned.replace(/—/g, '，');
+    cleaned = cleaned.replace(/–/g, '，');
+    cleaned = cleaned.replace(/→/g, '');
+    cleaned = cleaned.replace(/←/g, '');
+    cleaned = cleaned.replace(/↑/g, '');
+    cleaned = cleaned.replace(/↓/g, '');
+    cleaned = cleaned.replace(/✓/g, '');
+    cleaned = cleaned.replace(/✅/g, '');
+    cleaned = cleaned.replace(/❌/g, '');
+    cleaned = cleaned.replace(/⚠️/g, '注意');
+    cleaned = cleaned.replace(/⚠/g, '注意');
+    cleaned = cleaned.replace(/💡/g, '');
+    cleaned = cleaned.replace(/🔍/g, '');
+    cleaned = cleaned.replace(/📝/g, '');
+    cleaned = cleaned.replace(/🎯/g, '');
+    cleaned = cleaned.replace(/🟢/g, '');
+    cleaned = cleaned.replace(/🔵/g, '');
+    cleaned = cleaned.replace(/🔴/g, '');
+    cleaned = cleaned.replace(/🟣/g, '');
+    cleaned = cleaned.replace(/⚪/g, '');
+    cleaned = cleaned.replace(/☀/g, '');
+    cleaned = cleaned.replace(/🌡/g, '');
+    cleaned = cleaned.replace(/🤖/g, '');
+    cleaned = cleaned.replace(/🧠/g, '');
+    cleaned = cleaned.replace(/🖥/g, '');
+    cleaned = cleaned.replace(/🔄/g, '');
+    cleaned = cleaned.replace(/🚀/g, '');
+    cleaned = cleaned.replace(/📊/g, '');
+    cleaned = cleaned.replace(/💬/g, '');
+    cleaned = cleaned.replace(/✨/g, '');
+    cleaned = cleaned.replace(/🎨/g, '');
+    cleaned = cleaned.replace(/🔧/g, '');
+    cleaned = cleaned.replace(/📦/g, '');
+    cleaned = cleaned.replace(/🏷/g, '');
+    cleaned = cleaned.replace(/📖/g, '');
+    cleaned = cleaned.replace(/🎬/g, '');
+    cleaned = cleaned.replace(/🆕/g, '');
+    cleaned = cleaned.replace(/🔮/g, '');
+    
+    cleaned = cleaned.replace(/^\d+[.、）)\s]+/gm, '');
+    cleaned = cleaned.replace(/^[-*•·]\s*/gm, '');
+    
+    cleaned = cleaned.replace(/\n{3,}/g, '\n\n');
+    cleaned = cleaned.replace(/[ \t]+/g, ' ');
+    cleaned = cleaned.replace(/\n\s*\n/g, '。');
+    cleaned = cleaned.replace(/\n/g, '。');
+    cleaned = cleaned.replace(/\s+/g, ' ');
+    cleaned = cleaned.replace(/。{2,}/g, '。');
+    cleaned = cleaned.replace(/，，/g, '，');
+    cleaned = cleaned.replace(/，。/g, '，');
+    cleaned = cleaned.replace(/。，/g, '，');
+    
+    cleaned = cleaned.trim();
+    
+    if (cleaned && !/[。！？]$/.test(cleaned)) {
+        cleaned += '。';
+    }
+    
+    return cleaned;
+}
+
+function setVolume(value) {
+    localStorage.setItem('speechVolume', value);
+    const display = document.getElementById('volume-display');
+    if (display) {
+        display.textContent = Math.round(value * 100) + '%';
+    }
+    
+    if (currentSpeechText && speechSynthesis.speaking) {
+        isAdjustingVolume = true;
+        speak(currentSpeechText, speechCharIndex);
+        setTimeout(() => { isAdjustingVolume = false; }, 100);
+    }
+}
+
+function toggleVoice() {
+    if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+        alert('您的浏览器不支持语音识别，请使用文字输入');
+        return;
+    }
+    
+    const btn = document.getElementById('voice-btn');
+    const tip = document.querySelector('.voice-tip');
+    
+    if (isListening) {
+        if (recognition) {
+            recognition.stop();
+        }
+        isListening = false;
+        btn.innerHTML = '<i class="fas fa-microphone"></i>';
+        btn.style.background = 'linear-gradient(135deg, #2E7D32 0%, #0288D1 100%)';
+        tip.textContent = '点击按钮开始语音输入';
+        return;
+    }
+    
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    recognition = new SpeechRecognition();
+    recognition.lang = 'zh-CN';
+    recognition.continuous = false;
+    recognition.interimResults = false;
+    
+    recognition.onstart = () => {
+        isListening = true;
+        btn.innerHTML = '<i class="fas fa-stop"></i>';
+        btn.style.background = '#F44336';
+        tip.textContent = '正在聆听，请说出您的问题...';
+    };
+    
+    recognition.onresult = (event) => {
+        const text = event.results[0][0].transcript;
+        tip.textContent = `识别结果：${text}`;
+        setTimeout(() => {
+            sendQuestion(text);
+        }, 500);
+    };
+    
+    recognition.onerror = (event) => {
+        console.error('语音识别错误:', event.error);
+        tip.textContent = '识别失败，请重试';
+        isListening = false;
+        btn.innerHTML = '<i class="fas fa-microphone"></i>';
+        btn.style.background = 'linear-gradient(135deg, #2E7D32 0%, #0288D1 100%)';
+    };
+    
+    recognition.onend = () => {
+        isListening = false;
+        btn.innerHTML = '<i class="fas fa-microphone"></i>';
+        btn.style.background = 'linear-gradient(135deg, #2E7D32 0%, #0288D1 100%)';
+    };
+    
+    recognition.start();
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    checkAiStatus();
+    
+    const savedMode = localStorage.getItem('qa_ai_mode');
+    if (savedMode === 'true') {
+        document.getElementById('ai-mode-toggle').checked = true;
+        useAiMode = true;
+    }
+});
+</script>
+{% endblock %}

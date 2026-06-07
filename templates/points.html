@@ -1,0 +1,255 @@
+{% extends "base.html" %}
+{% set active_page = 'points' %}
+
+{% block title %}积分中心 - 智能垃圾分类{% endblock %}
+
+{% block content %}
+<div class="points-page">
+    <div class="points-header" style="display:flex;align-items:center;justify-content:space-between;position:relative;">
+        <div>
+            <h1>💎 积分中心</h1>
+            <p>记录环保足迹，解锁专属成就</p>
+        </div>
+    </div>
+
+    <div class="points-overview" style="background: linear-gradient(135deg, rgba(156, 39, 176, 0.2) 0%, rgba(103, 58, 183, 0.15) 100%); border-radius: 24px; padding: 2rem; margin-bottom: 2rem; border: 1px solid rgba(156, 39, 176, 0.3);">
+        <div class="level-section" style="text-align: center; margin-bottom: 2rem;">
+            <div class="level-badge" style="width: 100px; height: 100px; background: linear-gradient(135deg, #9C27B0 0%, #673AB7 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem; box-shadow: 0 10px 30px rgba(156, 39, 176, 0.4);">
+                <span id="level-number" style="font-size: 3rem; font-weight: 800; color: white;">1</span>
+            </div>
+            <h2 style="font-size: 1.5rem; margin-bottom: 0.5rem;">Lv.<span id="level-text">1</span> 环保新手</h2>
+            <div class="exp-bar-container" style="background: rgba(255, 255, 255, 0.1); border-radius: 10px; height: 12px; overflow: hidden; margin: 1rem auto; max-width: 300px;">
+                <div id="exp-bar" style="background: linear-gradient(90deg, #9C27B0 0%, #E91E63 100%); height: 100%; width: 0%; transition: width 0.5s ease;"></div>
+            </div>
+            <p style="opacity: 0.7; font-size: 0.9rem;"><span id="exp-current">0</span> / <span id="exp-next">100</span> 经验值</p>
+        </div>
+
+        <div class="stats-grid" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem;">
+            <div class="stat-card" style="background: rgba(255, 255, 255, 0.08); border-radius: 16px; padding: 1.5rem; text-align: center;">
+                <div style="font-size: 2.5rem; font-weight: 800; color: #E91E63;" id="total-points">0</div>
+                <div style="opacity: 0.7; margin-top: 0.3rem;">总积分</div>
+            </div>
+            <div class="stat-card" style="background: rgba(255, 255, 255, 0.08); border-radius: 16px; padding: 1.5rem; text-align: center;">
+                <div style="font-size: 2.5rem; font-weight: 800; color: #FF9800;" id="continuous-days">0</div>
+                <div style="opacity: 0.7; margin-top: 0.3rem;">连续打卡</div>
+            </div>
+            <div class="stat-card" style="background: rgba(255, 255, 255, 0.08); border-radius: 16px; padding: 1.5rem; text-align: center;">
+                <div style="font-size: 2.5rem; font-weight: 800; color: #4CAF50;" id="total-recognitions">0</div>
+                <div style="opacity: 0.7; margin-top: 0.3rem;">识别次数</div>
+            </div>
+            <div class="stat-card" style="background: rgba(255, 255, 255, 0.08); border-radius: 16px; padding: 1.5rem; text-align: center;">
+                <div style="font-size: 2.5rem; font-weight: 800; color: #2196F3;" id="total-questions">0</div>
+                <div style="opacity: 0.7; margin-top: 0.3rem;">问答次数</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="checkin-section" style="background: rgba(30, 40, 60, 0.8); backdrop-filter: blur(20px); border-radius: 20px; padding: 2rem; margin-bottom: 2rem; border: 1px solid rgba(255, 255, 255, 0.1);">
+        <h3 style="margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.8rem;">
+            <i class="fas fa-calendar-check" style="color: #FF9800;"></i>
+            每日打卡
+        </h3>
+        <div style="display: flex; flex-direction: column; align-items: center; justify-content: center;">
+            <button id="checkin-btn" onclick="doCheckin()" style="width: 180px; height: 180px; background: linear-gradient(135deg, #FF9800 0%, #F57C00 100%); border: none; border-radius: 50%; color: white; font-size: 1.2rem; cursor: pointer; transition: all 0.3s; box-shadow: 0 10px 30px rgba(255, 152, 0, 0.3); display: flex; flex-direction: column; align-items: center; justify-content: center; line-height: 1;">
+                <i class="fas fa-check" style="font-size: 3.5rem; margin-bottom: 0.3rem;"></i>
+                <span style="font-size: 1.1rem;">打卡</span>
+            </button>
+            <p id="checkin-status" style="margin-top: 1rem; opacity: 0.7;">点击打卡获得积分</p>
+        </div>
+    </div>
+
+    <div class="badges-section" style="background: rgba(30, 40, 60, 0.8); backdrop-filter: blur(20px); border-radius: 20px; padding: 2rem; margin-bottom: 2rem; border: 1px solid rgba(255, 255, 255, 0.1);">
+        <h3 style="margin-bottom: 1.5rem; display: flex; align-items: center; justify-content: space-between;">
+            <span style="display: flex; align-items: center; gap: 0.8rem;">
+                <i class="fas fa-medal" style="color: #FFD700;"></i>
+                成就徽章
+            </span>
+            <span id="badge-progress" style="font-size: 0.9rem; opacity: 0.7;">0/18</span>
+        </h3>
+        <div id="badges-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 1rem;">
+            <p style="opacity: 0.5; text-align: center; grid-column: 1/-1;">加载中...</p>
+        </div>
+    </div>
+
+    <div class="records-section" style="background: rgba(30, 40, 60, 0.8); backdrop-filter: blur(20px); border-radius: 20px; padding: 2rem; border: 1px solid rgba(255, 255, 255, 0.1);">
+        <h3 style="margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.8rem;">
+            <i class="fas fa-history" style="color: #2196F3;"></i>
+            积分记录
+        </h3>
+        <div id="records-list">
+            <p style="opacity: 0.5; text-align: center;">加载中...</p>
+        </div>
+    </div>
+</div>
+
+<div id="level-up-modal" class="modal" style="display: none;">
+    <div class="modal-content" style="background: linear-gradient(135deg, rgba(156, 39, 176, 0.95) 0%, rgba(103, 58, 183, 0.95) 100%); border-radius: 24px; padding: 3rem; max-width: 400px; text-align: center;">
+        <div style="font-size: 5rem; margin-bottom: 1rem;">🎉</div>
+        <h2 style="font-size: 2rem; margin-bottom: 1rem;">升级了！</h2>
+        <p style="font-size: 1.5rem; margin-bottom: 2rem;">Lv.<span id="new-level">2</span></p>
+        <button onclick="closeLevelUpModal()" style="padding: 1rem 2rem; background: rgba(255, 255, 255, 0.2); border: none; border-radius: 12px; color: white; font-size: 1rem; cursor: pointer;">
+            太棒了！
+        </button>
+    </div>
+</div>
+
+<div id="badge-modal" class="modal" style="display: none;">
+    <div class="modal-content" style="background: rgba(30, 40, 60, 0.95); border-radius: 24px; padding: 3rem; max-width: 400px; text-align: center;">
+        <div style="font-size: 5rem; margin-bottom: 1rem;">🏆</div>
+        <h2 style="font-size: 1.5rem; margin-bottom: 1rem;">解锁新徽章！</h2>
+        <div id="new-badge-info"></div>
+        <button onclick="closeBadgeModal()" style="margin-top: 2rem; padding: 1rem 2rem; background: linear-gradient(135deg, #FFD700 0%, #FFA000 100%); border: none; border-radius: 12px; color: white; font-size: 1rem; cursor: pointer;">
+            太棒了！
+        </button>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+/* ====== 配置 ====== */
+var LEVEL_NAMES = ['环保新手','环保入门','环保达人','环保专家','环保大师','环保宗师','环保传奇'];
+var RARITY_COLORS = {common:'#9E9E9E',rare:'#2196F3',epic:'#9C27B0',legendary:'#FFD700'};
+var TYPE_ICONS = {recognition:'fa-camera',question:'fa-comment',checkin:'fa-calendar-check',badge_unlock:'fa-medal'};
+
+/* ====== 积分数据 ====== */
+function loadPointsData() {
+    fetch('/api/points').then(function(r){return r.json();}).then(function(data){
+        if (!data.success) return;
+        var p = data.points;
+        document.getElementById('total-points').textContent = p.total || 0;
+        document.getElementById('level-number').textContent = p.level || 1;
+        document.getElementById('level-text').textContent = p.level || 1;
+        document.getElementById('continuous-days').textContent = p.continuous_days || 0;
+        document.getElementById('total-recognitions').textContent = p.total_recognitions || 0;
+        document.getElementById('total-questions').textContent = p.total_questions || 0;
+        document.getElementById('exp-current').textContent = p.exp_progress || 0;
+        document.getElementById('exp-next').textContent = p.exp_for_next || 100;
+
+        var expPercent = ((p.exp_progress || 0) / (p.exp_for_next || 1)) * 100;
+        document.getElementById('exp-bar').style.width = expPercent + '%';
+
+        var levelIdx = Math.min((p.level || 1) - 1, LEVEL_NAMES.length - 1);
+        var lvName = LEVEL_NAMES[levelIdx] || '环保新手';
+        document.querySelector('.level-section h2').innerHTML = 'Lv.' + (p.level || 1) + ' ' + lvName;
+    });
+}
+
+/* ====== 打卡 ====== */
+function doCheckin() {
+    var btn = document.getElementById('checkin-btn');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin" style="font-size:3rem;"></i>';
+
+    fetch('/api/points/checkin', {method:'POST'}).then(function(r){return r.json();}).then(function(data){
+        if (data.success) {
+            btn.style.background = 'linear-gradient(135deg,#4CAF50,#388E3C)';
+            btn.innerHTML = '<i class="fas fa-check" style="font-size:3.5rem;margin-bottom:.3rem;"></i><span style="font-size:1.1rem;">已打卡</span>';
+            document.getElementById('checkin-status').textContent = '+' + data.points_added + '积分！' + data.message;
+            document.getElementById('checkin-status').style.color = '#4CAF50';
+            loadPointsData();
+            loadRecords();
+            if (data.level_up && data.unlocked_badges && data.unlocked_badges[0]) {
+                showLevelUpModal(data.unlocked_badges[0].level);
+            }
+            if (data.unlocked_badges && data.unlocked_badges.length > 0) {
+                setTimeout(function(){ showBadgeModal(data.unlocked_badges[0]); }, 1500);
+            }
+        } else {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-check" style="font-size:3.5rem;margin-bottom:.3rem;"></i><span style="font-size:1.1rem;">打卡</span>';
+            document.getElementById('checkin-status').textContent = data.message || '打卡失败';
+            document.getElementById('checkin-status').style.color = '#FF9800';
+        }
+    }).catch(function(){
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-check" style="font-size:3.5rem;margin-bottom:.3rem;"></i><span style="font-size:1.1rem;">打卡</span>';
+        document.getElementById('checkin-status').textContent = '网络错误，请重试';
+    });
+}
+
+/* ====== 成就徽章 ====== */
+function loadBadges() {
+    fetch('/api/badges').then(function(r){return r.json();}).then(function(data){
+        if (!data.success) return;
+        document.getElementById('badge-progress').textContent = data.unlocked_count + '/' + data.total_count;
+        var grid = document.getElementById('badges-grid');
+        var html = '';
+        for (var i = 0; i < data.badges.length; i++) {
+            var b = data.badges[i];
+            var color = RARITY_COLORS[b.rarity] || '#9E9E9E';
+            var op = b.unlocked ? '1' : '0.3';
+            var ft = b.unlocked ? 'none' : 'grayscale(100%)';
+            var unlockedTag = b.unlocked ? '<div style="font-size:.7rem;color:#4CAF50;margin-top:.3rem;">✓ 已解锁</div>' : '';
+            html += '<div style="text-align:center;padding:1rem;background:rgba(255,255,255,.05);border-radius:12px;opacity:'+op+';filter:'+ft+';">'
+                + '<div style="font-size:2.5rem;margin-bottom:.5rem;">'+b.icon+'</div>'
+                + '<div style="font-size:.85rem;font-weight:600;color:'+color+';">'+b.name+'</div>'
+                + unlockedTag
+                + '</div>';
+        }
+        grid.innerHTML = html;
+    });
+}
+
+/* ====== 积分记录 ====== */
+function loadRecords() {
+    fetch('/api/points/records?limit=10').then(function(r){return r.json();}).then(function(data){
+        var list = document.getElementById('records-list');
+        if (!data.success || !data.records || data.records.length === 0) {
+            list.innerHTML = '<p style="opacity:.5;text-align:center;padding:2rem 0;">暂无积分记录</p>';
+            return;
+        }
+        var html = '';
+        for (var j = 0; j < data.records.length; j++) {
+            var rec = data.records[j];
+            var icon = TYPE_ICONS[rec.action_type] || 'fa-star';
+            var color = rec.points > 0 ? '#4CAF50' : '#F44336';
+            var desc = rec.action_desc || rec.action_type || '';
+            var timeStr = '';
+            try { timeStr = new Date(rec.created_at).toLocaleString('zh-CN'); } catch(e) { timeStr = ''; }
+
+            html += '<div style="display:flex;align-items:center;gap:1rem;padding:1rem;background:rgba(255,255,255,.05);border-radius:12px;margin-bottom:.6rem;">'
+                + '<div style="width:40px;height:40px;background:rgba(255,255,255,.1);border-radius:50%;display:flex;align-items:center;justify-content:center;">'
+                + '<i class="fas '+icon+'" style="color:#2196F3;"></i></div>'
+                + '<div style="flex:1;"><div style="font-weight:500;">'+desc+'</div>'
+                + '<div style="font-size:.85rem;opacity:.6;">'+timeStr+'</div></div>'
+                + '<div style="font-size:1.2rem;font-weight:600;color:'+color+';">+'+rec.points+'</div>'
+                + '</div>';
+        }
+        list.innerHTML = html;
+    }).catch(function(){
+        document.getElementById('records-list').innerHTML = '<p style="opacity:.5;text-align:center;padding:2rem 0;">加载失败</p>';
+    });
+}
+
+/* ====== 弹窗 ====== */
+function showLevelUpModal(newLv) {
+    document.getElementById('new-level').textContent = newLv || '2';
+    document.getElementById('level-up-modal').style.display = 'flex';
+}
+function closeLevelUpModal() {
+    document.getElementById('level-up-modal').style.display = 'none';
+}
+function showBadgeModal(badge) {
+    if (!badge) return;
+    var rc = RARITY_COLORS[badge.rarity] || '#9E9E9E';
+    document.getElementById('new-badge-info').innerHTML =
+        '<div style="font-size:4rem;margin-bottom:1rem;">'+badge.icon+'</div>'
+        + '<h3 style="color:'+rc+';">'+badge.name+'</h3>'
+        + '<p style="opacity:.7;margin-top:.5rem;">'+(badge.description||'')+'</p>'
+        + '<p style="color:#FFD700;margin-top:1rem;">+'+(badge.points_reward||0)+' 积分</p>';
+    document.getElementById('badge-modal').style.display = 'flex';
+}
+function closeBadgeModal() {
+    document.getElementById('badge-modal').style.display = 'none';
+    loadBadges();
+}
+
+/* ====== 初始化 ====== */
+document.addEventListener('DOMContentLoaded', function(){
+    loadPointsData();
+    loadBadges();
+    loadRecords();
+});
+</script>
+{% endblock %}

@@ -1,0 +1,132 @@
+{% extends "base.html" %}
+{% set active_page = 'guide' %}
+
+{% block title %}南方气候指南 - 智能垃圾分类{% endblock %}
+
+{% block content %}
+<div class="south-guide-page">
+    <div class="guide-header" style="text-align: center; padding: 2rem; background: linear-gradient(135deg, rgba(255, 152, 0, 0.3) 0%, rgba(255, 193, 7, 0.2) 100%); border-radius: 20px; margin-bottom: 2rem; position: relative;">
+        <button onclick="history.back()" style="position: absolute; top: 1rem; left: 1rem; width: 40px; height: 40px; background: rgba(255, 255, 255, 0.15); border: none; border-radius: 50%; color: white; font-size: 1.1rem; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.3s;" onmouseover="this.style.background='rgba(255,255,255,0.25)'" onmouseout="this.style.background='rgba(255,255,255,0.15)'">
+            <i class="fas fa-arrow-left"></i>
+        </button>
+        <h1>🌡️ 南方气候专属指南</h1>
+        <p style="opacity: 0.8; margin-top: 0.5rem;">珠海家庭 · 湿热气候适配 · 防潮除湿除味</p>
+    </div>
+
+    <div class="weather-status" id="weather-status" style="background: rgba(30, 40, 60, 0.8); backdrop-filter: blur(20px); border-radius: 20px; padding: 2rem; margin-bottom: 2rem; border: 1px solid rgba(255, 255, 255, 0.1);">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+            <div>
+                <h3 style="font-size: 1.5rem; margin-bottom: 0.5rem;">
+                    <i class="fas fa-map-marker-alt" style="color: #2196F3;"></i> 珠海
+                </h3>
+                <p id="weather-info" style="opacity: 0.7;">加载中...</p>
+            </div>
+            <div id="alert-badge" style="display: none; padding: 0.8rem 1.5rem; border-radius: 12px; font-weight: 600;"></div>
+        </div>
+    </div>
+
+    <div class="seasonal-tip" id="seasonal-tip" style="background: linear-gradient(135deg, rgba(76, 175, 80, 0.2) 0%, rgba(139, 195, 74, 0.2) 100%); border-radius: 20px; padding: 2rem; margin-bottom: 2rem; border-left: 4px solid #4CAF50;">
+        <h3 id="seasonal-title" style="margin-bottom: 1rem;"></h3>
+        <p id="seasonal-content" style="opacity: 0.9; line-height: 1.8;"></p>
+    </div>
+
+    <div class="tips-grid" id="tips-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
+    </div>
+
+    <div class="guide-sections" id="guide-sections">
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function loadSouthGuide() {
+    fetch('/api/south_guide')
+    .then(response => response.json())
+    .then(data => {
+        renderGuideSections(data.sections);
+    });
+}
+
+function loadWeatherStatus() {
+    fetch('/api/south_tips')
+    .then(response => response.json())
+    .then(data => {
+        const weatherInfo = document.getElementById('weather-info');
+        weatherInfo.textContent = `${data.season_name} · ${data.weather} · 湿度 ${data.humidity}%`;
+        
+        const alertBadge = document.getElementById('alert-badge');
+        if (data.alert_level === 'danger') {
+            alertBadge.style.display = 'block';
+            alertBadge.style.background = 'rgba(244, 67, 54, 0.3)';
+            alertBadge.style.color = '#F44336';
+            alertBadge.innerHTML = '<i class="fas fa-exclamation-triangle"></i> 高湿预警';
+        } else if (data.alert_level === 'warning') {
+            alertBadge.style.display = 'block';
+            alertBadge.style.background = 'rgba(255, 152, 0, 0.3)';
+            alertBadge.style.color = '#FF9800';
+            alertBadge.innerHTML = '<i class="fas fa-exclamation-circle"></i> 湿度较高';
+        }
+        
+        const seasonalTitle = document.getElementById('seasonal-title');
+        const seasonalContent = document.getElementById('seasonal-content');
+        seasonalTitle.textContent = data.seasonal.title;
+        seasonalContent.textContent = data.seasonal.content;
+        
+        renderTips(data.tips);
+    });
+}
+
+function renderTips(tips) {
+    const container = document.getElementById('tips-grid');
+    
+    const html = tips.map(tip => `
+        <div style="background: rgba(30, 40, 60, 0.8); backdrop-filter: blur(20px); border-radius: 20px; padding: 1.5rem; border: 1px solid rgba(255, 255, 255, 0.1);">
+            <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem;">
+                <div style="width: 50px; height: 50px; background: ${tip.color}33; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                    <i class="fas ${tip.icon}" style="color: ${tip.color}; font-size: 1.3rem;"></i>
+                </div>
+                <h4 style="font-size: 1.1rem;">${tip.title}</h4>
+            </div>
+            <p style="opacity: 0.8; margin-bottom: 1rem; line-height: 1.6;">${tip.content}</p>
+            <div style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
+                ${tip.actions.map(action => `
+                    <span style="background: rgba(255, 255, 255, 0.1); padding: 0.4rem 0.8rem; border-radius: 8px; font-size: 0.85rem;">
+                        <i class="fas fa-check" style="color: #4CAF50; margin-right: 0.3rem;"></i>${action}
+                    </span>
+                `).join('')}
+            </div>
+        </div>
+    `).join('');
+    
+    container.innerHTML = html;
+}
+
+function renderGuideSections(sections) {
+    const container = document.getElementById('guide-sections');
+    
+    const html = sections.map(section => `
+        <div style="background: rgba(30, 40, 60, 0.8); backdrop-filter: blur(20px); border-radius: 20px; padding: 2rem; margin-bottom: 1.5rem; border: 1px solid rgba(255, 255, 255, 0.1); ${section.highlight ? 'border-left: 4px solid #FF9800;' : ''}">
+            <h3 style="font-size: 1.3rem; margin-bottom: 1rem;">${section.title}</h3>
+            <p style="opacity: 0.9; line-height: 1.8; white-space: pre-line; margin-bottom: ${section.items ? '1rem' : '0'};">${section.content}</p>
+            ${section.items ? `
+            <div style="display: flex; flex-wrap: wrap; gap: 0.8rem;">
+                ${section.items.map(item => `
+                    <span style="background: linear-gradient(135deg, rgba(46, 125, 50, 0.3) 0%, rgba(2, 136, 209, 0.3) 100%); padding: 0.6rem 1.2rem; border-radius: 12px;">
+                        <i class="fas fa-check-circle" style="color: #4CAF50; margin-right: 0.3rem;"></i>${item}
+                    </span>
+                `).join('')}
+            </div>
+            ` : ''}
+        </div>
+    `).join('');
+    
+    container.innerHTML = html;
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    loadWeatherStatus();
+    loadSouthGuide();
+});
+</script>
+{% endblock %}

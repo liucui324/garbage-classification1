@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>用户登录 - 智能垃圾分类</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v=20260531v4">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #0a1628 0%, #1a2a4a 50%, #0d1f3c 100%);
+            padding: 1rem;
+        }
+        
+        .login-container {
+            width: 100%;
+            max-width: 450px;
+            background: rgba(30, 40, 60, 0.9);
+            backdrop-filter: blur(20px);
+            border-radius: 24px;
+            padding: 3rem 2.5rem;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+        
+        .login-header {
+            text-align: center;
+            margin-bottom: 2.5rem;
+        }
+        
+        .login-logo {
+            width: 90px;
+            height: 90px;
+            background: linear-gradient(135deg, #2E7D32 0%, #0288D1 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1.5rem;
+            animation: logoSpin 10s linear infinite;
+        }
+        
+        @keyframes logoSpin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .login-logo i {
+            font-size: 2.5rem;
+            color: white;
+        }
+        
+        .login-header h1 {
+            font-size: 1.8rem;
+            margin-bottom: 0.5rem;
+            color: white;
+        }
+        
+        .login-header p {
+            opacity: 0.7;
+            font-size: 1rem;
+        }
+        
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 0.6rem;
+            font-size: 1rem;
+            font-weight: 500;
+            opacity: 0.9;
+        }
+        
+        .form-input {
+            width: 100%;
+            padding: 1rem 1.2rem;
+            background: rgba(255, 255, 255, 0.08);
+            border: 2px solid rgba(255, 255, 255, 0.15);
+            border-radius: 14px;
+            color: white;
+            font-size: 1.05rem;
+            transition: all 0.3s;
+            outline: none;
+        }
+        
+        .form-input:focus {
+            border-color: #2E7D32;
+            background: rgba(46, 125, 50, 0.1);
+            box-shadow: 0 0 20px rgba(46, 125, 50, 0.2);
+        }
+        
+        .form-input::placeholder {
+            color: rgba(255, 255, 255, 0.4);
+        }
+        
+        .input-icon-wrapper {
+            position: relative;
+        }
+        
+        .input-icon {
+            position: absolute;
+            left: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: rgba(255, 255, 255, 0.5);
+            font-size: 1.1rem;
+        }
+        
+        .input-icon-wrapper .form-input {
+            padding-left: 3rem;
+        }
+        
+        .login-btn {
+            width: 100%;
+            padding: 1.3rem;
+            background: linear-gradient(135deg, #2E7D32 0%, #0288D1 100%);
+            border: none;
+            border-radius: 16px;
+            color: white;
+            font-size: 1.15rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 0.5rem;
+        }
+        
+        .login-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 35px rgba(46, 125, 50, 0.4);
+        }
+        
+        .login-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .login-footer {
+            text-align: center;
+            margin-top: 2rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .login-footer p {
+            opacity: 0.7;
+            margin-bottom: 0.5rem;
+        }
+        
+        .login-footer a {
+            color: #2196F3;
+            font-weight: 600;
+            text-decoration: none;
+        }
+        
+        .login-footer a:hover {
+            text-decoration: underline;
+        }
+        
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: rgba(255, 255, 255, 0.6);
+            text-decoration: none;
+            margin-top: 1.5rem;
+            font-size: 0.95rem;
+            transition: all 0.3s;
+        }
+        
+        .back-link:hover {
+            color: white;
+        }
+        
+        .error-message {
+            background: rgba(244, 67, 54, 0.2);
+            border-left: 4px solid #F44336;
+            padding: 1rem;
+            border-radius: 12px;
+            margin-bottom: 1.5rem;
+            color: #F44336;
+            font-size: 0.95rem;
+            display: none;
+        }
+        
+        .success-message {
+            background: rgba(76, 175, 80, 0.2);
+            border-left: 4px solid #4CAF50;
+            padding: 1rem;
+            border-radius: 12px;
+            margin-bottom: 1.5rem;
+            color: #4CAF50;
+            font-size: 0.95rem;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div class="login-header">
+            <div class="login-logo">
+                <i class="fas fa-recycle"></i>
+            </div>
+            <h1>欢迎回来</h1>
+            <p>登录您的智能垃圾分类账户</p>
+        </div>
+        
+        <div id="error-msg" class="error-message"></div>
+        <div id="success-msg" class="success-message"></div>
+        
+        <form id="login-form" onsubmit="handleLogin(event)">
+            <div class="form-group">
+                <label for="username">用户名</label>
+                <div class="input-icon-wrapper">
+                    <i class="fas fa-user input-icon"></i>
+                    <input type="text" id="username" name="username" class="form-input" placeholder="请输入用户名" required autocomplete="username">
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label for="password">密码</label>
+                <div class="input-icon-wrapper">
+                    <i class="fas fa-lock input-icon"></i>
+                    <input type="password" id="password" name="password" class="form-input" placeholder="请输入密码" required autocomplete="current-password">
+                </div>
+            </div>
+            
+            <button type="submit" class="login-btn" id="submit-btn">
+                <i class="fas fa-sign-in-alt"></i> 登录
+            </button>
+        </form>
+        
+        <div class="login-footer">
+            <p>还没有账号？<a href="/register">立即注册</a></p>
+        </div>
+        
+        <a href="/" class="back-link">
+            <i class="fas fa-arrow-left"></i> 返回首页
+        </a>
+    </div>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+    <script>
+    function handleLogin(event) {
+        event.preventDefault();
+        
+        const username = document.getElementById('username').value.trim();
+        const password = document.getElementById('password').value;
+        const submitBtn = document.getElementById('submit-btn');
+        const errorMsg = document.getElementById('error-msg');
+        const successMsg = document.getElementById('success-msg');
+        
+        if (!username || !password) {
+            showError('请填写用户名和密码');
+            return;
+        }
+        
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 登录中...';
+        hideError();
+        hideSuccess();
+        
+        fetch('/api/login', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ username, password })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showSuccess('登录成功！正在跳转...');
+                setTimeout(() => {
+                    window.location.href = '/';
+                }, 1500);
+            } else {
+                showError(data.message || '登录失败，请重试');
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '<i class="fas fa-sign-in-alt"></i> 登录';
+            }
+        })
+        .catch(error => {
+            showError('网络错误，请稍后重试');
+            console.error(error);
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '<i class="fas fa-sign-in-alt"></i> 登录';
+        });
+    }
+    
+    function showError(msg) {
+        const el = document.getElementById('error-msg');
+        el.textContent = msg;
+        el.style.display = 'block';
+    }
+    
+    function hideError() {
+        document.getElementById('error-msg').style.display = 'none';
+    }
+    
+    function showSuccess(msg) {
+        const el = document.getElementById('success-msg');
+        el.textContent = msg;
+        el.style.display = 'block';
+    }
+    
+    function hideSuccess() {
+        document.getElementById('success-msg').style.display = 'none';
+    }
+    
+    document.getElementById('username').focus();
+    </script>
+</body>
+</html>

@@ -1,0 +1,418 @@
+{% extends "base.html" %}
+{% set active_page = 'stats' %}
+
+{% block title %}数据分析 - 智能垃圾分类{% endblock %}
+
+{% block content %}
+<div class="stats-page">
+    <div class="stats-header">
+        <h1>📊 数据分析中心</h1>
+        <p>可视化你的环保足迹，见证每一次进步</p>
+    </div>
+
+    <div class="overview-cards" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 2rem;">
+        <div class="overview-card" style="background: linear-gradient(135deg, rgba(33, 150, 243, 0.2) 0%, rgba(33, 150, 243, 0.1) 100%); border-radius: 16px; padding: 1.5rem; border: 1px solid rgba(33, 150, 243, 0.3);">
+            <div style="display: flex; align-items: center; gap: 0.8rem; margin-bottom: 0.5rem;">
+                <i class="fas fa-trash-alt" style="font-size: 1.5rem; color: #2196F3;"></i>
+                <span style="opacity: 0.8;">总投放次数</span>
+            </div>
+            <div id="total-records" style="font-size: 2.5rem; font-weight: 800; color: #2196F3;">0</div>
+        </div>
+        
+        <div class="overview-card" style="background: linear-gradient(135deg, rgba(76, 175, 80, 0.2) 0%, rgba(76, 175, 80, 0.1) 100%); border-radius: 16px; padding: 1.5rem; border: 1px solid rgba(76, 175, 80, 0.3);">
+            <div style="display: flex; align-items: center; gap: 0.8rem; margin-bottom: 0.5rem;">
+                <i class="fas fa-calendar-day" style="font-size: 1.5rem; color: #4CAF50;"></i>
+                <span style="opacity: 0.8;">今日投放</span>
+            </div>
+            <div id="today-count" style="font-size: 2.5rem; font-weight: 800; color: #4CAF50;">0</div>
+        </div>
+        
+        <div class="overview-card" style="background: linear-gradient(135deg, rgba(255, 152, 0, 0.2) 0%, rgba(255, 152, 0, 0.1) 100%); border-radius: 16px; padding: 1.5rem; border: 1px solid rgba(255, 152, 0, 0.3);">
+            <div style="display: flex; align-items: center; gap: 0.8rem; margin-bottom: 0.5rem;">
+                <i class="fas fa-crown" style="font-size: 1.5rem; color: #FF9800;"></i>
+                <span style="opacity: 0.8;">最常分类</span>
+            </div>
+            <div id="top-category" style="font-size: 1.5rem; font-weight: 700; color: #FF9800;">-</div>
+        </div>
+    </div>
+
+    <div class="time-filter" style="display: flex; gap: 0.8rem; margin-bottom: 2rem;">
+        <button onclick="setTimeRange(7)" class="time-btn active" data-days="7" style="padding: 0.8rem 1.5rem; background: linear-gradient(135deg, rgba(156, 39, 176, 0.3) 0%, rgba(103, 58, 183, 0.2) 100%); border: 2px solid #9C27B0; border-radius: 12px; color: #fff; cursor: pointer; transition: all 0.3s;">近7天</button>
+        <button onclick="setTimeRange(30)" class="time-btn" data-days="30" style="padding: 0.8rem 1.5rem; background: rgba(255, 255, 255, 0.1); border: 2px solid rgba(255, 255, 255, 0.2); border-radius: 12px; color: #fff; cursor: pointer; transition: all 0.3s;">近30天</button>
+        <button onclick="setTimeRange(90)" class="time-btn" data-days="90" style="padding: 0.8rem 1.5rem; background: rgba(255, 255, 255, 0.1); border: 2px solid rgba(255, 255, 255, 0.2); border-radius: 12px; color: #fff; cursor: pointer; transition: all 0.3s;">近90天</button>
+    </div>
+
+    <div class="charts-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-bottom: 2rem;">
+        <div class="chart-card" style="background: rgba(30, 40, 60, 0.8); backdrop-filter: blur(20px); border-radius: 20px; padding: 2rem; border: 1px solid rgba(255, 255, 255, 0.1);">
+            <h3 style="margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.8rem;">
+                <i class="fas fa-chart-pie" style="color: #E91E63;"></i>
+                分类统计
+            </h3>
+            <div style="position: relative; height: 300px;">
+                <canvas id="categoryPieChart"></canvas>
+            </div>
+        </div>
+        
+        <div class="chart-card" style="background: rgba(30, 40, 60, 0.8); backdrop-filter: blur(20px); border-radius: 20px; padding: 2rem; border: 1px solid rgba(255, 255, 255, 0.1);">
+            <h3 style="margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.8rem;">
+                <i class="fas fa-chart-bar" style="color: #2196F3;"></i>
+                分类柱状图
+            </h3>
+            <div style="position: relative; height: 300px;">
+                <canvas id="categoryBarChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <div class="chart-card full-width" style="background: rgba(30, 40, 60, 0.8); backdrop-filter: blur(20px); border-radius: 20px; padding: 2rem; margin-bottom: 2rem; border: 1px solid rgba(255, 255, 255, 0.1);">
+        <h3 style="margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.8rem;">
+            <i class="fas fa-chart-line" style="color: #4CAF50;"></i>
+            投放趋势
+        </h3>
+        <div style="position: relative; height: 250px;">
+            <canvas id="trendChart"></canvas>
+        </div>
+    </div>
+
+    <div class="contribution-section" style="background: linear-gradient(135deg, rgba(76, 175, 80, 0.15) 0%, rgba(139, 195, 74, 0.1) 100%); border-radius: 20px; padding: 2rem; margin-bottom: 2rem; border: 1px solid rgba(76, 175, 80, 0.3);">
+        <h3 style="margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.8rem;">
+            <i class="fas fa-leaf" style="color: #4CAF50;"></i>
+            🌍 环保贡献值
+        </h3>
+        <div class="contribution-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1.5rem;">
+            <div style="text-align: center; padding: 1.5rem; background: rgba(255, 255, 255, 0.08); border-radius: 16px;">
+                <div style="font-size: 2.5rem; font-weight: 800; color: #4CAF50;" id="carbon-saved">0</div>
+                <div style="opacity: 0.7; margin-top: 0.3rem;">kg CO₂ 减排</div>
+                <div style="font-size: 0.85rem; color: #4CAF50; margin-top: 0.5rem;">🌱 碳足迹减少</div>
+            </div>
+            <div style="text-align: center; padding: 1.5rem; background: rgba(255, 255, 255, 0.08); border-radius: 16px;">
+                <div style="font-size: 2.5rem; font-weight: 800; color: #2196F3;" id="resource-recovered">0</div>
+                <div style="opacity: 0.7; margin-top: 0.3rem;">kg 资源回收</div>
+                <div style="font-size: 0.85rem; color: #2196F3; margin-top: 0.5rem;">♻️ 变废为宝</div>
+            </div>
+            <div style="text-align: center; padding: 1.5rem; background: rgba(255, 255, 255, 0.08); border-radius: 16px;">
+                <div style="font-size: 2.5rem; font-weight: 800; color: #FF9800;" id="energy-saved">0</div>
+                <div style="opacity: 0.7; margin-top: 0.3rem;">kWh 节约能源</div>
+                <div style="font-size: 0.85rem; color: #FF9800; margin-top: 0.5rem;">⚡ 能源节省</div>
+            </div>
+            <div style="text-align: center; padding: 1.5rem; background: rgba(255, 255, 255, 0.08); border-radius: 16px;">
+                <div style="font-size: 2.5rem; font-weight: 800; color: #E91E63;" id="trees-equivalent">0</div>
+                <div style="opacity: 0.7; margin-top: 0.3rem;">棵树 等效贡献</div>
+                <div style="font-size: 0.85rem; color: #E91E63; margin-top: 0.5rem;">🌳 植树造林</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="compare-section" style="background: rgba(30, 40, 60, 0.8); backdrop-filter: blur(20px); border-radius: 20px; padding: 2rem; margin-bottom: 2rem; border: 1px solid rgba(255, 255, 255, 0.1);">
+        <h3 style="margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.8rem;">
+            <i class="fas fa-users" style="color: #9C27B0;"></i>
+            👥 你 vs 社区平均
+        </h3>
+        <div id="compare-content" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem;">
+            <p style="opacity: 0.5; text-align: center;">加载中...</p>
+        </div>
+    </div>
+
+    <div class="heatmap-section" style="background: rgba(30, 40, 60, 0.8); backdrop-filter: blur(20px); border-radius: 20px; padding: 2rem; border: 1px solid rgba(255, 255, 255, 0.1);">
+        <h3 style="margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.8rem;">
+            <i class="fas fa-fire" style="color: #FF5722;"></i>
+            🔥 投放时间热力图
+        </h3>
+        <div id="heatmap-content">
+            <p style="opacity: 0.5; text-align: center;">加载中...</p>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script>
+let currentDays = 7;
+let pieChart = null;
+let barChart = null;
+let trendChart = null;
+
+const categoryColors = {
+    '可回收物': '#2196F3',
+    '厨余垃圾': '#4CAF50',
+    '其他垃圾': '#9E9E9E',
+    '有害垃圾': '#F44336'
+};
+
+function setTimeRange(days) {
+    currentDays = days;
+    document.querySelectorAll('.time-btn').forEach(btn => {
+        if (parseInt(btn.dataset.days) === days) {
+            btn.style.background = 'linear-gradient(135deg, rgba(156, 39, 176, 0.3) 0%, rgba(103, 58, 183, 0.2) 100%)';
+            btn.style.borderColor = '#9C27B0';
+        } else {
+            btn.style.background = 'rgba(255, 255, 255, 0.1)';
+            btn.style.borderColor = 'rgba(255, 255, 255, 0.2)';
+        }
+    });
+    loadAllStats();
+}
+
+function loadOverview() {
+    fetch('/api/stats/overview')
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            document.getElementById('total-records').textContent = data.overview.total_records;
+            document.getElementById('today-count').textContent = data.overview.today_count;
+            document.getElementById('top-category').textContent = data.overview.top_category || '-';
+        }
+    });
+}
+
+function loadCategoryStats() {
+    fetch(`/api/stats/category?days=${currentDays}`)
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            renderPieChart(data.stats);
+            renderBarChart(data.stats);
+        }
+    });
+}
+
+function renderPieChart(stats) {
+    const ctx = document.getElementById('categoryPieChart').getContext('2d');
+    
+    if (pieChart) pieChart.destroy();
+    
+    const labels = Object.keys(stats);
+    const values = Object.values(stats);
+    const colors = labels.map(l => categoryColors[l] || '#9E9E9E');
+    
+    pieChart = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: labels,
+            datasets: [{
+                data: values,
+                backgroundColor: colors,
+                borderWidth: 0
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: { color: '#fff', padding: 15 }
+                }
+            }
+        }
+    });
+}
+
+function renderBarChart(stats) {
+    const ctx = document.getElementById('categoryBarChart').getContext('2d');
+    
+    if (barChart) barChart.destroy();
+    
+    const labels = Object.keys(stats);
+    const values = Object.values(stats);
+    const colors = labels.map(l => categoryColors[l] || '#9E9E9E');
+    
+    barChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{
+                data: values,
+                backgroundColor: colors,
+                borderRadius: 8
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    grid: { color: 'rgba(255,255,255,0.1)' },
+                    ticks: { color: '#fff' }
+                },
+                x: {
+                    grid: { display: false },
+                    ticks: { color: '#fff' }
+                }
+            }
+        }
+    });
+}
+
+function loadTrend() {
+    fetch(`/api/stats/trend?days=${currentDays}`)
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            renderTrendChart(data.trend);
+        }
+    });
+}
+
+function renderTrendChart(trend) {
+    const ctx = document.getElementById('trendChart').getContext('2d');
+    
+    if (trendChart) trendChart.destroy();
+    
+    const labels = trend.map(t => t.date.substring(5));
+    const counts = trend.map(t => t.count);
+    
+    trendChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: '投放次数',
+                data: counts,
+                borderColor: '#4CAF50',
+                backgroundColor: 'rgba(76, 175, 80, 0.2)',
+                fill: true,
+                tension: 0.4,
+                pointBackgroundColor: '#4CAF50',
+                pointRadius: 5
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    grid: { color: 'rgba(255,255,255,0.1)' },
+                    ticks: { color: '#fff' }
+                },
+                x: {
+                    grid: { display: false },
+                    ticks: { color: '#fff' }
+                }
+            }
+        }
+    });
+}
+
+function loadContribution() {
+    fetch(`/api/stats/contribution?days=${currentDays}`)
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            const c = data.contribution;
+            document.getElementById('carbon-saved').textContent = c.carbon_saved;
+            document.getElementById('resource-recovered').textContent = c.resource_recovered;
+            document.getElementById('energy-saved').textContent = c.energy_saved;
+            document.getElementById('trees-equivalent').textContent = c.trees_equivalent;
+        }
+    });
+}
+
+function loadCompare() {
+    fetch('/api/stats/compare')
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            const c = data.compare;
+            const container = document.getElementById('compare-content');
+            
+            container.innerHTML = `
+                <div style="padding: 1.5rem; background: rgba(255, 255, 255, 0.08); border-radius: 16px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                        <span>日均投放次数</span>
+                        <span style="color: ${c.daily_diff >= 0 ? '#4CAF50' : '#F44336'};">
+                            ${c.daily_diff >= 0 ? '↑' : '↓'}${Math.abs(c.daily_diff)}%
+                        </span>
+                    </div>
+                    <div style="display: flex; gap: 1rem;">
+                        <div style="flex: 1; text-align: center;">
+                            <div style="font-size: 1.8rem; font-weight: 700; color: #9C27B0;">${c.user_daily_count}</div>
+                            <div style="opacity: 0.6; font-size: 0.85rem;">你</div>
+                        </div>
+                        <div style="flex: 1; text-align: center;">
+                            <div style="font-size: 1.8rem; font-weight: 700; color: #FF9800;">${c.community_avg_count}</div>
+                            <div style="opacity: 0.6; font-size: 0.85rem;">社区</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div style="padding: 1.5rem; background: rgba(255, 255, 255, 0.08); border-radius: 16px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                        <span>可回收率</span>
+                        <span style="color: ${c.recyclable_diff >= 0 ? '#4CAF50' : '#F44336'};">
+                            ${c.recyclable_diff >= 0 ? '↑' : '↓'}${Math.abs(c.recyclable_diff)}%
+                        </span>
+                    </div>
+                    <div style="display: flex; gap: 1rem;">
+                        <div style="flex: 1; text-align: center;">
+                            <div style="font-size: 1.8rem; font-weight: 700; color: #2196F3;">${c.user_recyclable_rate}%</div>
+                            <div style="opacity: 0.6; font-size: 0.85rem;">你</div>
+                        </div>
+                        <div style="flex: 1; text-align: center;">
+                            <div style="font-size: 1.8rem; font-weight: 700; color: #FF9800;">${c.community_recyclable_rate}%</div>
+                            <div style="opacity: 0.6; font-size: 0.85rem;">社区</div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+    });
+}
+
+function loadHeatmap() {
+    fetch(`/api/stats/heatmap?days=${currentDays}`)
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            const h = data.heatmap;
+            const container = document.getElementById('heatmap-content');
+            
+            const peakHoursHtml = h.peak_hours.map(([hour, count]) => 
+                `<span style="display: inline-block; background: rgba(255, 87, 34, 0.3); padding: 0.5rem 1rem; border-radius: 8px; margin: 0.3rem;">
+                    ${hour}:00 <small style="opacity: 0.6;">(${count}次)</small>
+                </span>`
+            ).join('');
+            
+            const peakDaysHtml = h.peak_days.map(([day, count]) => 
+                `<span style="display: inline-block; background: rgba(255, 152, 0, 0.3); padding: 0.5rem 1rem; border-radius: 8px; margin: 0.3rem;">
+                    ${day} <small style="opacity: 0.6;">(${count}次)</small>
+                </span>`
+            ).join('');
+            
+            container.innerHTML = `
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
+                    <div>
+                        <h4 style="margin-bottom: 1rem; color: #FF5722;"><i class="fas fa-clock"></i> 高峰时段</h4>
+                        <div>${peakHoursHtml || '<span style="opacity: 0.5;">暂无数据</span>'}</div>
+                    </div>
+                    <div>
+                        <h4 style="margin-bottom: 1rem; color: #FF9800;"><i class="fas fa-calendar"></i> 高峰日期</h4>
+                        <div>${peakDaysHtml || '<span style="opacity: 0.5;">暂无数据</span>'}</div>
+                    </div>
+                </div>
+            `;
+        }
+    });
+}
+
+function loadAllStats() {
+    loadOverview();
+    loadCategoryStats();
+    loadTrend();
+    loadContribution();
+    loadCompare();
+    loadHeatmap();
+}
+
+document.addEventListener('DOMContentLoaded', loadAllStats);
+</script>
+{% endblock %}
