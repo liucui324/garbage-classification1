@@ -1,0 +1,10 @@
+# 忽略大模型文件
+trash_classifier.pth
+
+# 忽略数据库文件
+instance/trash.db
+
+# 其他常见忽略
+*.log
+__pycache__/
+.vscode/
